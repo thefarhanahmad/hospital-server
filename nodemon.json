@@ -1,0 +1,17 @@
+{
+  "ignore": [
+    ".git",
+    "node_modules/**/node_modules",
+    "static/*"
+  ],
+  "verbose": true,
+  "watch": [
+    "*.js",
+    "routes/",
+    "controllers/",
+    "models/",
+    "middleware/",
+    "utils/"
+  ],
+  "ext": "js,json"
+}

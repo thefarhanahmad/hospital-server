@@ -2,74 +2,54 @@ const mongoose = require("mongoose");
 
 const doctorSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: [true, "Name is required"],
-      trim: true,
-    },
-    specialization: {
-      type: String,
-      required: [true, "Specialization is required"],
-      trim: true,
-    },
-    qualifications: [
-      {
-        degree: String,
-        institution: String,
-        year: Number,
-      },
-    ],
-    registrationNumber: {
-      type: String,
-      required: [true, "Registration number is required"],
-      unique: true,
-    },
-    experience: {
-      type: Number,
-      required: [true, "Years of experience is required"],
-    },
+    name: { type: String, required: [true, "Name is required"], trim: true },
+    registrationNumber: { type: String, required: true, unique: true },
+    clinicName: { type: String, required: true, trim: true },
+    verification: { type: Boolean, default: false },
+    degree: { type: String, required: true },
+    aadharCardNumber: { type: String, required: true, unique: true },
     contactInfo: {
-      email: {
-        type: String,
-        required: [true, "Email is required"],
-        unique: true,
-        lowercase: true,
-      },
-      phone: {
-        type: String,
-        required: [true, "Phone number is required"],
-      },
+      phone: { type: String, required: true },
+      email: { type: String, required: true },
     },
-    availability: [
-      {
-        day: {
-          type: String,
-          enum: [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-          ],
-        },
-        slots: [
+    documents: {
+      educationalQualifications: {
+        tenthMarksheet: { type: String },
+        twelfthMarksheet: { type: String },
+      },
+      medicalDegreeDocuments: {
+        degreeCertificate: { type: String, required: true },
+        academicYearMarksheets: [
           {
-            startTime: String,
-            endTime: String,
+            year: String,
+            filePath: String,
           },
         ],
       },
+      photograph: { type: String },
+      mciRegistration: {
+        type: [String], // Array of file paths
+        default: [], // Default to an empty array
+      },
+    },
+    clinics: [
+      {
+        clinicName: { type: String, required: true },
+        location: {
+          address: { type: String, required: true },
+          latitude: { type: Number },
+          longitude: { type: Number },
+        },
+        clinicPhotos: [{ type: String }],
+      },
     ],
-    hospital: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hospital",
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "Pending",
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Doctor", doctorSchema);

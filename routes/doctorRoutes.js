@@ -7,13 +7,30 @@ const {
   consultationRules,
   prescriptionRules,
 } = require("../validations/doctorValidation");
+const upload = require("../config/multer");
 
 const router = express.Router();
 
 // Public routes
+// Define the fields to be uploaded
+
+const uploadFields = [
+  { name: "tenthMarksheet", maxCount: 1 },
+  { name: "twelfthMarksheet", maxCount: 1 },
+  { name: "degreeCertificate", maxCount: 1 },
+  { name: "doctorPhotograph", maxCount: 1 },
+  { name: "firstYearMarksheet", maxCount: 1 },
+  { name: "secondYearMarksheet", maxCount: 1 },
+  { name: "thirdYearMarksheet", maxCount: 1 },
+  { name: "fourthYearMarksheet", maxCount: 1 },
+  { name: "fifthYearMarksheet", maxCount: 1 },
+  { name: "mciRegistration", maxCount: 1 },
+  { name: "clinicPhotographs", maxCount: 10 }, // Allow multiple clinic photos
+];
+
 router.post(
   "/register",
-  validateRequest(doctorRegistrationRules),
+  upload.fields(uploadFields),
   doctorController.registerDoctor
 );
 

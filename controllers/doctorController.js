@@ -26,6 +26,9 @@ exports.verifyDoctor = catchAsync(async (req, res, next) => {
     doctor: req.params.id,
   });
 
+  console.log("verification doctor : ", verification);
+  console.log(req.params.id);
+
   if (!verification) {
     return next(new AppError("Verification record not found", 404));
   }

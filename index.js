@@ -5,8 +5,18 @@ const errorHandler = require("./middleware/error");
 const routes = require("./routes");
 const config = require("./config/server");
 const logger = require("./utils/logger");
+const cors = require("cors");
 
 const app = express();
+
+// Allow requests from localhost:3000
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
+    credentials: true, // Enable cookies and authentication headers
+  })
+);
 
 // Connect to MongoDB
 connectDB();

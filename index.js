@@ -12,7 +12,7 @@ const app = express();
 // Allow requests from localhost:3000
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
     credentials: true, // Enable cookies and authentication headers
   })

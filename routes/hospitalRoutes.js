@@ -8,12 +8,19 @@ const {
   admissionRules,
   dischargeRules,
 } = require("../validations/hospitalValidation");
+const upload = require("../config/multer");
 
 const router = express.Router();
 
 // Public routes
+// Define upload configuration for hospital images
+const uploadFields = [
+  { name: "hospitalImages", maxCount: 10 }, // Allow up to 10 hospital images
+];
+
 router.post(
   "/register",
+  upload.fields(uploadFields), // Use multer to handle image uploads
   validateRequest(hospitalRegistrationRules),
   hospitalController.registerHospital
 );

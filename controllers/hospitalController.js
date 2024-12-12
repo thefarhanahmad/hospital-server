@@ -5,21 +5,107 @@ const PatientAdmission = require("../models/PatientAdmission");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 
+const cloudinary = require("../config/cloudinary");
+
 exports.registerHospital = catchAsync(async (req, res) => {
-  console.log("Hospital Type: ", req.body.type); // Log the 'type' field
-  console.log("Request Body: ", req.body); // Log the entire body
+  console.log("Request Body: ", req.body);
 
-  const hospital = await Hospital.create(req.body);
+  try {
+    // Destructure non-file fields from the request body
+    const {
+      name,
+      cmoNumber,
+      insuranceServices,
+      ownershipInformation,
+      registrationBasis,
+      chargesOverview,
+      doctorAvailability,
+    } = req.body;
 
-  await HospitalVerification.create({
-    hospital: hospital._id,
-    documents: req.body.documents,
-  });
+    // Initialize hospitalImages array for storing uploaded images' URLs
+    const hospitalImages = [];
+    if (req.files?.hospitalImages) {
+      for (const file of req.files.hospitalImages) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: "hospital_images", // Specify Cloudinary folder
+        });
+        hospitalImages.push(result.secure_url); // Save Cloudinary URL
+      }
+    }
 
-  res.status(201).json({
-    status: "success",
-    data: { hospital },
-  });
+    // Construct hospital data for the schema
+    const hospitalData = {
+      name,
+      cmoNumber,
+      hospitalImages, // Add processed images
+      insuranceServices: {
+        tps: insuranceServices?.tps || [],
+        ayushmanBharat: {
+          enabled: insuranceServices?.ayushmanBharat?.enabled || false,
+          specialties: insuranceServices?.ayushmanBharat?.specialties || [],
+          beds: insuranceServices?.ayushmanBharat?.beds || 0,
+        },
+        cghs: {
+          enabled: insuranceServices?.cghs?.enabled || false,
+          specialties: insuranceServices?.cghs?.specialties || [],
+          beds: insuranceServices?.cghs?.beds || 0,
+        },
+      },
+      ownershipInformation: {
+        enabled: ownershipInformation?.enabled || false,
+        ownershipType: ownershipInformation?.ownershipType || null,
+        customDetails: ownershipInformation?.customDetails || null,
+      },
+      registrationBasis,
+      chargesOverview:
+        chargesOverview?.map((charge) => ({
+          chargeName: charge.chargeName,
+          timing: charge.timing,
+          price: charge.price,
+        })) || [],
+      doctorAvailability: {
+        availableDoctors:
+          doctorAvailability?.availableDoctors?.map((doctor) => ({
+            name: doctor.name,
+            status: doctor.status,
+          })) || [],
+        onCallDoctors: doctorAvailability?.onCallDoctors || 0,
+        permanentDoctors: doctorAvailability?.permanentDoctors || 0,
+        doctorDutyTimings:
+          doctorAvailability?.doctorDutyTimings?.map((timing) => ({
+            doctorName: timing.doctorName,
+            shift: {
+              start: timing.shift?.start || null,
+              end: timing.shift?.end || null,
+            },
+          })) || [],
+      },
+    };
+
+    // Save the hospital to the database
+    const hospital = await Hospital.create(hospitalData);
+
+    // Handle additional documents for verification if provided
+    // if (req.body.documents) {
+    //   await HospitalVerification.create({
+    //     hospital: hospital._id,
+    //     documents: req.body.documents,
+    //   });
+    // }
+
+    // Respond with success
+    res.status(201).json({
+      status: "success",
+      data: { hospital },
+    });
+  } catch (error) {
+    // Handle errors and respond appropriately
+    console.error("Error in registerHospital:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: error.message || "Something went wrong.",
+    });
+  }
 });
 
 exports.verifyHospital = catchAsync(async (req, res, next) => {

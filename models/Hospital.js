@@ -7,60 +7,137 @@ const hospitalSchema = new mongoose.Schema(
       required: [true, "Hospital name is required"],
       trim: true,
     },
-    type: {
+
+    cmoNumber: {
       type: String,
-      enum: ["public", "private", "community"],
-      // required: true,
-      // default: "public",
+      required: [true, "CMO number is required"],
     },
-    registrationNumber: {
-      type: String,
-      required: [true, "Registration number is required"],
-      unique: true,
-    },
-    contactInfo: {
-      email: {
-        type: String,
-        required: [true, "Email is required"],
-        unique: true,
-        lowercase: true,
-      },
-      phone: {
-        type: String,
-        required: [true, "Phone number is required"],
-      },
-      website: String,
-    },
-    address: {
-      street: String,
-      city: String,
-      state: String,
-      zipCode: String,
-      country: String,
-      coordinates: {
-        latitude: Number,
-        longitude: Number,
-      },
-    },
-    facilities: [
+    hospitalImages: [
       {
-        name: String,
-        description: String,
-        available: Boolean,
+        type: String,
+        required: true,
       },
     ],
-    departments: [
+    insuranceServices: {
+      tps: [
+        {
+          type: String,
+          enum: ["Max", "HDFC Ergo", "Kotak Health"],
+        },
+      ],
+      ayushmanBharat: {
+        enabled: {
+          type: Boolean,
+          default: false,
+        },
+        specialties: [
+          {
+            type: String,
+            enum: ["Pediatrics", "Gynecology", "Orthopedics"],
+          },
+        ],
+        beds: {
+          type: Number,
+        },
+      },
+      cghs: {
+        enabled: {
+          type: Boolean,
+          default: false,
+        },
+        specialties: [
+          {
+            type: String,
+            enum: ["Pediatrics", "Gynecology", "Orthopedics"],
+          },
+        ],
+        beds: {
+          type: Number,
+        },
+      },
+    },
+    ownershipInformation: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      ownershipType: {
+        type: String,
+        enum: [
+          "Trust",
+          "Society",
+          "Company",
+          "Partnership Deed",
+          "Individual",
+          "Custom",
+        ],
+      },
+      customDetails: {
+        type: String,
+      },
+    },
+    registrationBasis: {
+      type: String,
+      enum: [
+        "Trust",
+        "Society",
+        "Company",
+        "Partnership Deed",
+        "Individual",
+        "Custom",
+      ],
+    },
+    chargesOverview: [
       {
-        name: String,
-        head: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Doctor",
+        chargeName: {
+          type: String,
+          required: true,
+        },
+        timing: {
+          type: String,
+          required: true,
+        },
+        price: {
+          type: Number,
+          required: true,
         },
       },
     ],
-    emergencyServices: {
-      available: Boolean,
-      contactNumber: String,
+    doctorAvailability: {
+      availableDoctors: [
+        {
+          name: {
+            type: String,
+            required: true,
+          },
+          status: {
+            type: String,
+            enum: ["available", "not-available"],
+            default: "not-available",
+          },
+        },
+      ],
+      onCallDoctors: {
+        type: Number,
+      },
+      permanentDoctors: {
+        type: Number,
+      },
+      doctorDutyTimings: [
+        {
+          doctorName: {
+            type: String,
+          },
+          shift: {
+            start: {
+              type: String, // Time in HH:MM format
+            },
+            end: {
+              type: String, // Time in HH:MM format
+            },
+          },
+        },
+      ],
     },
   },
   {

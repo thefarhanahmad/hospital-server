@@ -10,7 +10,8 @@ const hospitalSchema = new mongoose.Schema(
 
     cmoNumber: {
       type: String,
-      required: [true, "CMO number is required"],
+      enum: ["public", "private", "community"],
+      default: "public",
     },
     hospitalImages: [
       {

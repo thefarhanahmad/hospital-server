@@ -29,6 +29,7 @@ router.post(
 router.use(protect);
 router.use(restrictTo("hospital"));
 
+router.post("/bed-status", hospitalController.createBedStatus);
 router.get("/bed-status", hospitalController.getBedStatus);
 router.put(
   "/bed-status",

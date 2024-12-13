@@ -128,6 +128,33 @@ exports.verifyHospital = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.createBedStatus = catchAsync(async (req, res) => {
+  const { ward, totalBeds, occupiedBeds, charges, facilities } = req.body;
+
+  // Validate that occupiedBeds does not exceed totalBeds
+  if (occupiedBeds > totalBeds) {
+    return res.status(400).json({
+      status: "fail",
+      message: "Occupied beds cannot exceed total beds.",
+    });
+  }
+
+  // Create the bed inventory entry
+  const bedStatus = await BedInventory.create({
+    hospital: req.user._id, // Assuming req.user contains authenticated hospital info
+    ward,
+    totalBeds,
+    occupiedBeds,
+    charges,
+    facilities,
+  });
+
+  res.status(201).json({
+    status: "success",
+    data: { bedStatus },
+  });
+});
+
 exports.getBedStatus = catchAsync(async (req, res) => {
   const bedStatus = await BedInventory.find({
     hospital: req.user._id,

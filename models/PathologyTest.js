@@ -38,15 +38,16 @@ const pathologyTestSchema = new mongoose.Schema(
       min: 0,
     },
     turnaroundTime: {
-      value: {
-        type: Number,
-        required: [true, "Turnaround time is required"],
-      },
-      unit: {
-        type: String,
-        enum: ["hours", "days"],
-        default: "days",
-      },
+      // value: {
+      //   type: Number,
+      //   required: [true, "Turnaround time is required"],
+      // },
+      // unit: {
+      type: String,
+      required: [true, "TAT is required"],
+      //   enum: ["hours", "days"],
+      //   default: "days",
+      // },
     },
     requirements: [
       {

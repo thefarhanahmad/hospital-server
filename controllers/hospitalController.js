@@ -128,31 +128,62 @@ exports.verifyHospital = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createBedStatus = catchAsync(async (req, res) => {
-  const { ward, totalBeds, occupiedBeds, charges, facilities } = req.body;
+exports.createBedStatus = catchAsync(async (req, res, next) => {
+  try {
+    const { ward, totalBeds, occupiedBeds, charges, facilities } = req.body;
 
-  // Validate that occupiedBeds does not exceed totalBeds
-  if (occupiedBeds > totalBeds) {
-    return res.status(400).json({
-      status: "fail",
-      message: "Occupied beds cannot exceed total beds.",
+    // Validate required fields
+    if (
+      !ward ||
+      totalBeds === undefined ||
+      occupiedBeds === undefined ||
+      !charges?.base
+    ) {
+      return res.status(400).json({
+        status: "fail",
+        message:
+          "Missing required fields: ward, totalBeds, occupiedBeds, and charges.base are required.",
+      });
+    }
+
+    // Validate occupiedBeds does not exceed totalBeds
+    if (occupiedBeds > totalBeds) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Occupied beds cannot exceed total beds.",
+      });
+    }
+
+    // Create the bed inventory entry
+    const bedStatus = await BedInventory.create({
+      hospital: req.user._id, // Assuming req.user contains the authenticated user with a valid hospital ID
+      ward,
+      totalBeds,
+      occupiedBeds,
+      charges,
+      facilities,
+    });
+
+    res.status(201).json({
+      status: "success",
+      data: { bedStatus },
+    });
+  } catch (err) {
+    // Handle validation errors from Mongoose
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        status: "error",
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    // Generic error handler
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while creating the bed inventory.",
     });
   }
-
-  // Create the bed inventory entry
-  const bedStatus = await BedInventory.create({
-    hospital: req.user._id, // Assuming req.user contains authenticated hospital info
-    ward,
-    totalBeds,
-    occupiedBeds,
-    charges,
-    facilities,
-  });
-
-  res.status(201).json({
-    status: "success",
-    data: { bedStatus },
-  });
 });
 
 exports.getBedStatus = catchAsync(async (req, res) => {

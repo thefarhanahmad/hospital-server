@@ -11,10 +11,13 @@ exports.testValidation = [
     .isFloat({ min: 0 })
     .withMessage("Price must be a positive number"),
 
-  body("turnaroundTime")
-    .trim()
-    .notEmpty()
+  body("turnaroundTime.value")
+    .isInt({ min: 1 })
     .withMessage("Turnaround time must be a positive number"),
+
+  body("turnaroundTime.unit")
+    .isIn(["hours", "days"])
+    .withMessage("Invalid time unit"),
 
   body("sampleType")
     .isIn(["blood", "urine", "stool", "tissue", "other"])

@@ -140,6 +140,7 @@ exports.getBloodRequests = catchAsync(async (req, res) => {
   const requests = await BloodRequest.find({ bloodBank: req.user._id })
     .populate("requestedBy", "name")
     .populate("approvedBy", "name")
+    .populate("bloodBank")
     .sort("-createdAt");
 
   res.status(200).json({

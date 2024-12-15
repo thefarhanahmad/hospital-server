@@ -18,27 +18,47 @@ exports.updateInventory = catchAsync(async (req, res) => {
 
 exports.getAvailability = catchAsync(async (req, res) => {
   const inventory = await BloodInventory.aggregate([
+    // Match documents based on the current blood bank, availability, and expiry date
     {
       $match: {
-        bloodBank: req.user._id,
-        status: "available",
-        expiryDate: { $gt: new Date() },
+        bloodBank: req.user._id, // Filters by the user's associated blood bank
+        status: "available", // Ensures only "available" items are included
+        expiryDate: { $gt: new Date() }, // Includes only items not yet expired
       },
     },
+    // Group by blood type and component while aggregating relevant fields
     {
       $group: {
         _id: {
           bloodType: "$bloodType",
           component: "$component",
         },
-        quantity: { $sum: "$quantity" },
+        quantity: { $sum: "$quantity" }, // Sum up quantities per group
+        collectionDates: { $addToSet: "$collectionDate" }, // Collect unique collection dates
+        expiryDates: { $addToSet: "$expiryDate" }, // Collect unique expiry dates
+        statuses: { $addToSet: "$status" }, // Collect unique statuses
+      },
+    },
+    // Reshape the output for better readability
+    {
+      $project: {
+        _id: 0, // Exclude the default _id field
+        bloodType: "$_id.bloodType", // Rename and include bloodType
+        component: "$_id.component", // Rename and include component
+        quantity: 1, // Include the total quantity
+        collectionDates: 1, // Include all unique collection dates
+        expiryDates: 1, // Include all unique expiry dates
+        statuses: 1, // Include all unique statuses
       },
     },
   ]);
 
+  // Return the response with the inventory data
   res.status(200).json({
     status: "success",
-    data: { inventory },
+    data: {
+      inventory,
+    },
   });
 });
 

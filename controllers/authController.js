@@ -41,10 +41,8 @@ exports.register = catchAsync(async (req, res, next) => {
     phone,
     dateOfBirth,
     gender,
-    address,
+    address = {},
   } = req.body;
-
-  console.log("name : ", name);
 
   const alreadyEmail = await User.findOne({ email: email });
   if (alreadyEmail) {
@@ -52,7 +50,6 @@ exports.register = catchAsync(async (req, res, next) => {
       message: "User already exists",
     });
   }
-
   const newUser = await User.create({
     name: name,
     username: username,

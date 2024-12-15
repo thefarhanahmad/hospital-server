@@ -4,16 +4,16 @@ const BedInventory = require("../models/BedInventory");
 const PatientAdmission = require("../models/PatientAdmission");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
-
+const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 
-exports.registerHospital = catchAsync(async (req, res) => {
-  console.log("Request Body: ", req.body);
-
+exports.registerHospital = async (req, res) => {
   try {
-    // Destructure non-file fields from the request body
     const {
+      registrationNumber,
       name,
+      type,
+      email,
       cmoNumber,
       insuranceServices,
       ownershipInformation,
@@ -22,24 +22,34 @@ exports.registerHospital = catchAsync(async (req, res) => {
       doctorAvailability,
     } = req.body;
 
-    // Initialize hospitalImages array for storing uploaded images' URLs
-    const hospitalImages = [];
-    if (req.files?.hospitalImages) {
-      for (const file of req.files.hospitalImages) {
-        const result = await cloudinary.uploader.upload(file.path, {
-          folder: "hospital_images", // Specify Cloudinary folder
-        });
-        hospitalImages.push(result.secure_url); // Save Cloudinary URL
-      }
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      return res.status(400).json({
+        status: "error",
+        message: "Provided email is not associated with any user.",
+      });
     }
 
-    // Construct hospital data for the schema
-    const hospitalData = {
-      name,
-      cmoNumber,
-      hospitalImages, // Add processed images
+    const hospitalImages = req.files?.hospitalImages
+      ? await Promise.all(
+          req.files.hospitalImages.map(async (file) => {
+            const result = await cloudinary.uploader.upload(file.path, {
+              folder: "hospital_images",
+            });
+            return result.secure_url;
+          })
+        )
+      : [];
+
+    const hospital = await Hospital.create({
+      registrationNumber: registrationNumber,
+      type: type,
+      email,
+      name: name,
+      cmoNumber: cmoNumber,
+      hospitalImages,
       insuranceServices: {
-        tps: insuranceServices?.tps || [],
+        ...insuranceServices,
         ayushmanBharat: {
           enabled: insuranceServices?.ayushmanBharat?.enabled || false,
           specialties: insuranceServices?.ayushmanBharat?.specialties || [],
@@ -57,41 +67,13 @@ exports.registerHospital = catchAsync(async (req, res) => {
         customDetails: ownershipInformation?.customDetails || null,
       },
       registrationBasis,
-      chargesOverview:
-        chargesOverview?.map((charge) => ({
-          chargeName: charge.chargeName,
-          timing: charge.timing,
-          price: charge.price,
-        })) || [],
+      chargesOverview: chargesOverview || [],
       doctorAvailability: {
-        availableDoctors:
-          doctorAvailability?.availableDoctors?.map((doctor) => ({
-            name: doctor.name,
-            status: doctor.status,
-          })) || [],
+        availableDoctors: doctorAvailability?.availableDoctors || [],
         onCallDoctors: doctorAvailability?.onCallDoctors || 0,
         permanentDoctors: doctorAvailability?.permanentDoctors || 0,
-        doctorDutyTimings:
-          doctorAvailability?.doctorDutyTimings?.map((timing) => ({
-            doctorName: timing.doctorName,
-            shift: {
-              start: timing.shift?.start || null,
-              end: timing.shift?.end || null,
-            },
-          })) || [],
       },
-    };
-
-    // Save the hospital to the database
-    const hospital = await Hospital.create(hospitalData);
-
-    // Handle additional documents for verification if provided
-    // if (req.body.documents) {
-    //   await HospitalVerification.create({
-    //     hospital: hospital._id,
-    //     documents: req.body.documents,
-    //   });
-    // }
+    });
 
     // Respond with success
     res.status(201).json({
@@ -99,14 +81,13 @@ exports.registerHospital = catchAsync(async (req, res) => {
       data: { hospital },
     });
   } catch (error) {
-    // Handle errors and respond appropriately
     console.error("Error in registerHospital:", error.message);
     res.status(500).json({
       status: "error",
       message: error.message || "Something went wrong.",
     });
   }
-});
+};
 
 exports.verifyHospital = catchAsync(async (req, res, next) => {
   const verification = await HospitalVerification.findOne({
@@ -128,6 +109,39 @@ exports.verifyHospital = catchAsync(async (req, res, next) => {
   });
 });
 
+
+exports.createBed = async (req, res) => {
+  try {
+    const { ward, totalBeds, occupiedBeds, charges, facilities } = req.body;
+    const hospitalId = req.user._id;
+    console.log(hospitalId)
+    if (!hospitalId) {
+      return res.status(400).json({ message: "Hospital ID is required" });
+    }
+
+    const newBedInventory = new BedInventory({
+      hospital: hospitalId,
+      ward,
+      totalBeds,
+      occupiedBeds,
+      charges: {
+        base: charges.base,
+        nursing: charges.nursing,
+        oxygen: charges.oxygen,
+        ventilator: charges.ventilator,
+      },
+      facilities,
+    });
+
+    const savedBedInventory = await newBedInventory.save();
+
+    res.status(201).json(savedBedInventory);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating bed inventory", error: error.message });
+  }
+};
 exports.getBedStatus = catchAsync(async (req, res) => {
   const bedStatus = await BedInventory.find({
     hospital: req.user._id,
@@ -147,6 +161,7 @@ exports.updateBedStatus = catchAsync(async (req, res, next) => {
     return next(new AppError("Occupied beds cannot exceed total beds", 400));
   }
 
+
   const bedInventory = await BedInventory.findOneAndUpdate(
     {
       hospital: req.user._id,
@@ -155,7 +170,7 @@ exports.updateBedStatus = catchAsync(async (req, res, next) => {
     req.body,
     {
       new: true,
-      runValidators: true,
+    
     }
   );
 
@@ -170,20 +185,18 @@ exports.updateBedStatus = catchAsync(async (req, res, next) => {
 });
 
 exports.admitPatient = catchAsync(async (req, res, next) => {
-  // Check bed availability
+  
   const bedInventory = await BedInventory.findById(req.body.bedInventory);
 
   if (!bedInventory || bedInventory.availableBeds <= 0) {
     return next(new AppError("No beds available in selected ward", 400));
   }
 
-  // Create admission record
   const admission = await PatientAdmission.create({
     ...req.body,
     hospital: req.user._id,
   });
 
-  // Update bed inventory
   bedInventory.occupiedBeds += 1;
   await bedInventory.save();
 

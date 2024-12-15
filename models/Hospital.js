@@ -1,18 +1,32 @@
 const mongoose = require("mongoose");
-
+const User = require("../models/User");
 const hospitalSchema = new mongoose.Schema(
   {
+    registrationNumber: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    type: {
+      type: String,
+      enum: ["public", "private"],
+      default: "public",
+    },
+    hospitalId: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
+
     name: {
       type: String,
       required: [true, "Hospital name is required"],
       trim: true,
     },
-
     cmoNumber: {
       type: String,
-      enum: ["public", "private", "community"],
-      default: "public",
     },
+
     hospitalImages: [
       {
         type: String,
@@ -124,21 +138,6 @@ const hospitalSchema = new mongoose.Schema(
       permanentDoctors: {
         type: Number,
       },
-      doctorDutyTimings: [
-        {
-          doctorName: {
-            type: String,
-          },
-          shift: {
-            start: {
-              type: String, // Time in HH:MM format
-            },
-            end: {
-              type: String, // Time in HH:MM format
-            },
-          },
-        },
-      ],
     },
   },
   {

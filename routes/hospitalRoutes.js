@@ -3,7 +3,6 @@ const hospitalController = require("../controllers/hospitalController");
 const { protect, restrictTo } = require("../middleware/auth");
 const { validateRequest } = require("../middleware/validateRequest");
 const {
-  hospitalRegistrationRules,
   bedStatusRules,
   admissionRules,
   dischargeRules,
@@ -12,16 +11,10 @@ const upload = require("../config/multer");
 
 const router = express.Router();
 
-// Public routes
-// Define upload configuration for hospital images
-const uploadFields = [
-  { name: "hospitalImages", maxCount: 10 }, // Allow up to 10 hospital images
-];
-
+const uploadFields = [{ name: "hospitalImages", maxCount: 10 }];
 router.post(
   "/register",
-  upload.fields(uploadFields), // Use multer to handle image uploads
-  validateRequest(hospitalRegistrationRules),
+  upload.fields(uploadFields),
   hospitalController.registerHospital
 );
 
@@ -35,6 +28,8 @@ router.put(
   validateRequest(bedStatusRules),
   hospitalController.updateBedStatus
 );
+router.post(
+  "/createbad",hospitalController.createBed);
 
 router.post(
   "/admission",

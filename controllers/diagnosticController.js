@@ -38,8 +38,6 @@ exports.getTests = catchAsync(async (req, res) => {
     center: req.user._id,
     active: true,
   });
-  // .populate("Equipment", "name model")
-  // .sort("category name");
 
   res.status(200).json({
     status: "success",
@@ -48,31 +46,65 @@ exports.getTests = catchAsync(async (req, res) => {
   });
 });
 
-// Report Management
 exports.createReport = catchAsync(async (req, res, next) => {
-  const { test, patient } = req.body;
+  try {
+    // Destructure the data from the request body
+    const { test, patient, performedAt, conclusion, status, radiologist } =
+      req.body;
 
-  // Validate test exists
-  const testExists = await DiagnosticTest.findOne({
-    _id: test,
-    center: req.user._id,
-  });
+    // Log the incoming data for debugging
+    console.log("req body : ", req.body);
+    console.log("req files : ", req.files);
 
-  if (!testExists) {
-    return next(new AppError("Test not found", 404));
+    // Parse the stringified findings and recommendations
+    const findings = JSON.parse(req.body.findings); // Parse the stringified JSON
+    const recommendations = JSON.parse(req.body.recommendations) || []; // Parse recommendations or default to empty array
+
+    // Validate test existence
+    const testExists = await DiagnosticTest.findOne({
+      _id: test,
+      center: req.user._id,
+    });
+    if (!testExists) {
+      return next(new AppError("Test not found", 404));
+    }
+
+    // Build the images array
+    let images = [];
+    if (req.files && req.files.length > 0) {
+      // If images are provided, process them
+      images = req.files.map((file) => ({
+        url: file.path, // File URL after Cloudinary upload (if applicable)
+        description: req.body.imageDescriptions || "No description", // Optional field
+        uploadedAt: new Date(),
+      }));
+    } else {
+      console.log("No images provided");
+    }
+
+    // Create the diagnostic report
+    const report = await DiagnosticReport.create({
+      test,
+      patient,
+      performedAt,
+      conclusion,
+      status,
+      radiologist,
+      findings, // Save the parsed findings object
+      recommendations, // Save the parsed recommendations array
+      images, // Save the uploaded images array
+      center: req.user._id,
+      reportGeneratedAt: new Date(),
+      verifiedBy: req.user._id,
+    });
+
+    res.status(201).json({
+      status: "success",
+      data: { report },
+    });
+  } catch (err) {
+    next(err);
   }
-
-  const report = await DiagnosticReport.create({
-    ...req.body,
-    center: req.user._id,
-    reportGeneratedAt: new Date(),
-    verifiedBy: req.user._id,
-  });
-
-  res.status(201).json({
-    status: "success",
-    data: { report },
-  });
 });
 
 exports.getReports = catchAsync(async (req, res) => {

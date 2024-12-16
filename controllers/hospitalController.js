@@ -116,8 +116,14 @@ exports.createBed = async (req, res) => {
     const { ward, totalBeds, occupiedBeds, charges, facilities } = req.body;
     const hospitalId = req.user._id;
     console.log(hospitalId);
+
     if (!hospitalId) {
       return res.status(400).json({ message: "Hospital ID is required" });
+    }
+
+    // Check if charges object exists and contains necessary properties
+    if (!charges || !charges.base || !charges.nursing || !charges.oxygen || !charges.ventilator) {
+      return res.status(400).json({ message: "Charges data is incomplete" });
     }
 
     const newBedInventory = new BedInventory({
@@ -138,9 +144,8 @@ exports.createBed = async (req, res) => {
 
     res.status(201).json(savedBedInventory);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating bed inventory", error: error.message });
+    console.error("Error creating bed inventory:", error);
+    res.status(500).json({ message: "Error creating bed inventory", error: error.message });
   }
 };
 

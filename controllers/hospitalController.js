@@ -20,7 +20,7 @@ exports.registerHospital = async (req, res) => {
       ownershipInformation,
       registrationBasis,
       chargesOverview,
-      hospitalImages,
+
       doctorAvailability,
     } = req.body;
 
@@ -32,16 +32,16 @@ exports.registerHospital = async (req, res) => {
       });
     }
 
-    // const hospitalImages = req.files?.hospitalImages
-    //   ? await Promise.all(
-    //       req.files.hospitalImages.map(async (file) => {
-    //         const result = await cloudinary.uploader.upload(file.path, {
-    //           folder: "hospital_images",
-    //         });
-    //         return result.secure_url;
-    //       })
-    //     )
-    //   : [];
+    const hospitalImages = req.files?.hospitalImages
+      ? await Promise.all(
+          req.files.hospitalImages.map(async (file) => {
+            const result = await cloudinary.uploader.upload(file.path, {
+              folder: "hospital_images",
+            });
+            return result.secure_url;
+          })
+        )
+      : [];
 
     const hospital = await Hospital.create({
       registrationNumber: registrationNumber,
@@ -49,7 +49,7 @@ exports.registerHospital = async (req, res) => {
       email,
       name: name,
       cmoNumber: cmoNumber,
-      hospitalImages,
+      hospitalImages: hospitalImages,
       insuranceServices: {
         ...insuranceServices,
         ayushmanBharat: {
@@ -115,14 +115,20 @@ exports.createBed = async (req, res) => {
   try {
     const { ward, totalBeds, occupiedBeds, charges, facilities } = req.body;
     const hospitalId = req.user._id;
-    console.log(hospitalId);
+    console.log("req body : ", ward);
 
     if (!hospitalId) {
       return res.status(400).json({ message: "Hospital ID is required" });
     }
 
     // Check if charges object exists and contains necessary properties
-    if (!charges || !charges.base || !charges.nursing || !charges.oxygen || !charges.ventilator) {
+    if (
+      !charges ||
+      !charges.base ||
+      !charges.nursing ||
+      !charges.oxygen ||
+      !charges.ventilator
+    ) {
       return res.status(400).json({ message: "Charges data is incomplete" });
     }
 
@@ -145,7 +151,9 @@ exports.createBed = async (req, res) => {
     res.status(201).json(savedBedInventory);
   } catch (error) {
     console.error("Error creating bed inventory:", error);
-    res.status(500).json({ message: "Error creating bed inventory", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error creating bed inventory", error: error.message });
   }
 };
 
@@ -209,6 +217,17 @@ exports.admitPatient = catchAsync(async (req, res, next) => {
     data: { admission },
   });
 });
+
+// exports.getAdmitPatients = catchAsync(async (req, res, next) => {
+//   const admission = await PatientAdmission.find({
+//     hospital: req.user._id,
+//   });
+
+//   res.status(201).json({
+//     status: "success",
+//     data: { admission },
+//   });
+// });
 
 exports.dischargePatient = catchAsync(async (req, res, next) => {
   const admission = await PatientAdmission.findById(req.params.id);

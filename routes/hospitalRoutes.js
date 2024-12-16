@@ -35,6 +35,7 @@ router.post(
   validateRequest(admissionRules),
   hospitalController.admitPatient
 );
+// router.get("/admission", hospitalController.getAdmitPatients);
 
 router.put(
   "/discharge/:id",

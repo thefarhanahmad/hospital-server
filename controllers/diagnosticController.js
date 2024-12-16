@@ -69,19 +69,6 @@ exports.createReport = catchAsync(async (req, res, next) => {
       return next(new AppError("Test not found", 404));
     }
 
-    // Build the images array
-    let images = [];
-    if (req.files && req.files.length > 0) {
-      // If images are provided, process them
-      images = req.files.map((file) => ({
-        url: file.path, // File URL after Cloudinary upload (if applicable)
-        description: req.body.imageDescriptions || "No description", // Optional field
-        uploadedAt: new Date(),
-      }));
-    } else {
-      console.log("No images provided");
-    }
-
     // Create the diagnostic report
     const report = await DiagnosticReport.create({
       test,
@@ -92,7 +79,7 @@ exports.createReport = catchAsync(async (req, res, next) => {
       radiologist,
       findings, // Save the parsed findings object
       recommendations, // Save the parsed recommendations array
-      images, // Save the uploaded images array
+
       center: req.user._id,
       reportGeneratedAt: new Date(),
       verifiedBy: req.user._id,

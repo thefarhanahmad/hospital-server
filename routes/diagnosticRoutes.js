@@ -25,8 +25,8 @@ router.get("/tests", diagnosticController.getTests);
 // Report Management
 router.post(
   "/report",
-  upload.array("images"),
-  validateRequest(reportValidation),
+
+  // validateRequest(reportValidation),
   diagnosticController.createReport
 );
 

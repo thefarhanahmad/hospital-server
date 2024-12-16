@@ -41,28 +41,6 @@ exports.reportValidation = [
 
   body("performedAt").isISO8601().withMessage("Invalid date format"),
 
-  // body("findings")
-  //   .custom(parseJSONField) // Parse findings as JSON
-  //   .custom((findings) => {
-  //     if (!findings.description) {
-  //       throw new Error("Findings description is required");
-  //     }
-  //     if (!Array.isArray(findings.observations)) {
-  //       throw new Error("Observations must be an array");
-  //     }
-  //     return true; // Pass validation
-  //   }),
-
-  // body("recommendations")
-  //   .optional()
-  //   .custom(parseJSONField) // Parse recommendations as JSON
-  //   .custom((recommendations) => {
-  //     if (!Array.isArray(recommendations)) {
-  //       throw new Error("Recommendations must be an array");
-  //     }
-  //     return true; // Pass validation
-  //   }),
-
   body("conclusion").notEmpty().withMessage("Conclusion is required"),
 
   body("radiologist").notEmpty().withMessage("Radiologist ID is required"),

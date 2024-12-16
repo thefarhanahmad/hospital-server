@@ -11,7 +11,6 @@ exports.registerDoctor = catchAsync(async (req, res) => {
   console.log("Request body:", req.body);
 
   try {
-    // Extract non-file fields from the request body
     const {
       name,
       registrationNumber,
@@ -131,7 +130,6 @@ exports.registerDoctor = catchAsync(async (req, res) => {
       data: { doctor },
     });
   } catch (error) {
-    // Handle errors and send appropriate response
     console.error("Error in registerDoctor:", error.message);
     res.status(500).json({
       status: "error",

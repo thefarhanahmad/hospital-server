@@ -25,11 +25,6 @@ const hospitalSchema = new mongoose.Schema(
     },
     cmoNumber: {
       type: String,
-<<<<<<< Updated upstream
-=======
-      enum: ["public", "private", "community"],
-      default: "public",
->>>>>>> Stashed changes
     },
 
     hospitalImages: [

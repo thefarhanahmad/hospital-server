@@ -25,7 +25,7 @@ const uploadFields = [
   { name: "fourthYearMarksheet", maxCount: 1 },
   { name: "fifthYearMarksheet", maxCount: 1 },
   { name: "mciRegistration", maxCount: 1 },
-  { name: "clinicPhotographs", maxCount: 10 }, // Allow multiple clinic photos
+  { name: "clinicPhotographs", maxCount: 10 }, 
 ];
 
 router.post(

@@ -8,6 +8,7 @@ const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 
 exports.registerHospital = async (req, res) => {
+  console.log(req.body)
   try {
     const {
       registrationNumber,
@@ -19,6 +20,7 @@ exports.registerHospital = async (req, res) => {
       ownershipInformation,
       registrationBasis,
       chargesOverview,
+      hospitalImages,
       doctorAvailability,
     } = req.body;
 
@@ -30,16 +32,16 @@ exports.registerHospital = async (req, res) => {
       });
     }
 
-    const hospitalImages = req.files?.hospitalImages
-      ? await Promise.all(
-          req.files.hospitalImages.map(async (file) => {
-            const result = await cloudinary.uploader.upload(file.path, {
-              folder: "hospital_images",
-            });
-            return result.secure_url;
-          })
-        )
-      : [];
+    // const hospitalImages = req.files?.hospitalImages
+    //   ? await Promise.all(
+    //       req.files.hospitalImages.map(async (file) => {
+    //         const result = await cloudinary.uploader.upload(file.path, {
+    //           folder: "hospital_images",
+    //         });
+    //         return result.secure_url;
+    //       })
+    //     )
+    //   : [];
 
     const hospital = await Hospital.create({
       registrationNumber: registrationNumber,
@@ -109,12 +111,11 @@ exports.verifyHospital = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.createBed = async (req, res) => {
   try {
     const { ward, totalBeds, occupiedBeds, charges, facilities } = req.body;
     const hospitalId = req.user._id;
-    console.log(hospitalId)
+    console.log(hospitalId);
     if (!hospitalId) {
       return res.status(400).json({ message: "Hospital ID is required" });
     }
@@ -142,6 +143,7 @@ exports.createBed = async (req, res) => {
       .json({ message: "Error creating bed inventory", error: error.message });
   }
 };
+
 exports.getBedStatus = catchAsync(async (req, res) => {
   const bedStatus = await BedInventory.find({
     hospital: req.user._id,
@@ -161,7 +163,6 @@ exports.updateBedStatus = catchAsync(async (req, res, next) => {
     return next(new AppError("Occupied beds cannot exceed total beds", 400));
   }
 
-
   const bedInventory = await BedInventory.findOneAndUpdate(
     {
       hospital: req.user._id,
@@ -170,7 +171,6 @@ exports.updateBedStatus = catchAsync(async (req, res, next) => {
     req.body,
     {
       new: true,
-    
     }
   );
 
@@ -185,7 +185,6 @@ exports.updateBedStatus = catchAsync(async (req, res, next) => {
 });
 
 exports.admitPatient = catchAsync(async (req, res, next) => {
-  
   const bedInventory = await BedInventory.findById(req.body.bedInventory);
 
   if (!bedInventory || bedInventory.availableBeds <= 0) {

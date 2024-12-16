@@ -22,15 +22,13 @@ router.post(
 router.use(protect);
 router.use(restrictTo("hospital"));
 
-router.post("/bed-status", hospitalController.createBedStatus);
+router.post("/bed-status", hospitalController.createBed);
 router.get("/bed-status", hospitalController.getBedStatus);
 router.put(
   "/bed-status",
   validateRequest(bedStatusRules),
   hospitalController.updateBedStatus
 );
-router.post(
-  "/createbad",hospitalController.createBed);
 
 router.post(
   "/admission",

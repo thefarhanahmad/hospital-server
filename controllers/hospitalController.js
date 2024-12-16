@@ -8,7 +8,7 @@ const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 
 exports.registerHospital = async (req, res) => {
-  console.log(req.body)
+  console.log(req.body);
   try {
     const {
       registrationNumber,

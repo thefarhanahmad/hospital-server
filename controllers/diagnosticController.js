@@ -4,6 +4,24 @@ const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 
 // Test Rates and Discounts Management
+exports.createTest = catchAsync(async (req, res) => {
+  const { basePrice, discountPercentage } = req.body;
+  const discountedPrice = discountPercentage
+    ? basePrice - (basePrice * discountPercentage) / 100
+    : null;
+
+  const test = await DiagnosticTest.create({
+    ...req.body,
+    discountedPrice,
+    center: req.user._id,
+  });
+
+  res.status(200).json({
+    status: "test created success",
+    data: { test },
+  });
+});
+
 exports.addOrUpdateTest = catchAsync(async (req, res) => {
   const { basePrice, discountPercentage } = req.body;
   const discountedPrice = discountPercentage
@@ -49,16 +67,18 @@ exports.getTests = catchAsync(async (req, res) => {
 exports.createReport = catchAsync(async (req, res, next) => {
   try {
     // Destructure the data from the request body
-    const { test, patient, performedAt, conclusion, status, radiologist } =
-      req.body;
+    const {
+      test,
+      patient,
+      performedAt,
+      conclusion,
+      status,
+      findings,
+      recommendations,
+    } = req.body;
 
     // Log the incoming data for debugging
     console.log("req body : ", req.body);
-    console.log("req files : ", req.files);
-
-    // Parse the stringified findings and recommendations
-    const findings = JSON.parse(req.body.findings); // Parse the stringified JSON
-    const recommendations = JSON.parse(req.body.recommendations) || []; // Parse recommendations or default to empty array
 
     // Validate test existence
     const testExists = await DiagnosticTest.findOne({
@@ -76,10 +96,8 @@ exports.createReport = catchAsync(async (req, res, next) => {
       performedAt,
       conclusion,
       status,
-      radiologist,
-      findings, // Save the parsed findings object
-      recommendations, // Save the parsed recommendations array
-
+      findings,
+      recommendations,
       center: req.user._id,
       reportGeneratedAt: new Date(),
       verifiedBy: req.user._id,
@@ -100,7 +118,6 @@ exports.getReports = catchAsync(async (req, res) => {
   })
     .populate("patient", "name email")
     .populate("test", "name category")
-    .populate("radiologist", "name")
     .populate("verifiedBy", "name")
     .sort("-createdAt");
 

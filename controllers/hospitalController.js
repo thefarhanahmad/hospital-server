@@ -8,7 +8,7 @@ const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 
 exports.registerHospital = async (req, res) => {
-  console.log(req.body);
+  console.log("req body : ", req.body);
   try {
     const {
       registrationNumber,
@@ -23,7 +23,7 @@ exports.registerHospital = async (req, res) => {
 
       doctorAvailability,
     } = req.body;
-
+    console.log("email from req body : ", email);
     const user = await User.findOne({ email: email });
     if (!user) {
       return res.status(400).json({

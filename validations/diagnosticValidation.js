@@ -43,8 +43,6 @@ exports.reportValidation = [
 
   body("conclusion").notEmpty().withMessage("Conclusion is required"),
 
-  body("radiologist").notEmpty().withMessage("Radiologist ID is required"),
-
   body("status")
     .isIn(["pending", "in-progress", "completed", "cancelled"])
     .withMessage("Invalid status value"),

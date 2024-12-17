@@ -14,10 +14,16 @@ router.use(protect);
 router.use(restrictTo("diagnostic"));
 
 // Test Rates and Discounts
-router.post(
+router.patch(
   "/test-rates/:id?",
   validateRequest(testValidation),
   diagnosticController.addOrUpdateTest
+);
+
+router.post(
+  "/test-rates",
+  validateRequest(testValidation),
+  diagnosticController.createTest
 );
 
 router.get("/tests", diagnosticController.getTests);
@@ -26,7 +32,7 @@ router.get("/tests", diagnosticController.getTests);
 router.post(
   "/report",
 
-  // validateRequest(reportValidation),
+  validateRequest(reportValidation),
   diagnosticController.createReport
 );
 

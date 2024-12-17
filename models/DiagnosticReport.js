@@ -35,10 +35,7 @@ const diagnosticReportSchema = new mongoose.Schema(
       enum: ["pending", "in-progress", "completed", "cancelled"],
       default: "pending",
     },
-    radiologist: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+   
     verifiedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -31,11 +31,11 @@ router.get("/tests", diagnosticController.getTests);
 // Report Management
 router.post(
   "/report",
+  // validateRequest(reportValidation),
 
   validateRequest(reportValidation),
   diagnosticController.createReport
 );
 
 router.get("/reports", diagnosticController.getReports);
-
 module.exports = router;

@@ -4,12 +4,11 @@ const Consultation = require("../models/Consultation");
 const Prescription = require("../models/Prescription");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const cloudinary = require("../config/cloudinary")
 const mongoose = require("mongoose");
 const User = require("../models/User");
-
+const fs=require("fs")
 exports.registerDoctor = catchAsync(async (req, res) => {
-  console.log("Request body:", req.body);
-
   try {
     const {
       name,
@@ -25,85 +24,104 @@ exports.registerDoctor = catchAsync(async (req, res) => {
       email,
     } = req.body;
 
-    const alreadyUser = await User.findOne({ email: email });
+    // Check if user already exists
+    const alreadyUser = await Doctor.findOne({ contactInfo:{email:email}});
     if (alreadyUser) {
-      return res.status(401).json({
+      return res.status(400).json({
         status: "error",
-        message: "already user exists",
+        message: "User already exists with this email.",
       });
     }
-    // Initialize an object to hold the uploaded document URLs
+
+    // Prepare the documents object to store file paths
     const documents = {
-      educationalQualifications: {},
-      medicalDegreeDocuments: {},
+      educationalQualifications: {
+        tenthMarksheet: req.files.tenthMarksheet?.[0]?.path,
+        twelfthMarksheet: req.files.twelfthMarksheet?.[0]?.path,
+      },
+      medicalDegreeDocuments: {
+        degreeCertificate: req.files.degreeCertificate?.[0]?.path,
+        academicYearMarksheets: [
+          {
+            year: "1st Year",
+            filePath: req.files.firstYearMarksheet?.[0]?.path,
+          },
+          {
+            year: "2nd Year",
+            filePath: req.files.secondYearMarksheet?.[0]?.path,
+          },
+          {
+            year: "3rd Year",
+            filePath: req.files.thirdYearMarksheet?.[0]?.path,
+          },
+          {
+            year: "4th Year",
+            filePath: req.files.fourthYearMarksheet?.[0]?.path,
+          },
+          {
+            year: "5th Year",
+            filePath: req.files.fifthYearMarksheet?.[0]?.path,
+          },
+        ].filter((marksheet) => marksheet.filePath),
+      },
+      photograph: req.files.doctorPhotograph?.[0]?.path,
+      mciRegistration: req.files.mciRegistration?.[0]?.path,
     };
 
-    // Check if req.files exists and is an array or object
-    if (req.files) {
-      Object.keys(req.files).forEach((fieldName) => {
-        if (Array.isArray(req.files[fieldName])) {
-          // Handle multiple files (array of files)
-          documents[fieldName] = req.files[fieldName].map((file) => file.path); // Array of Cloudinary URLs
-        } else {
-          // Handle single file (single file)
-          documents[fieldName] = req.files[fieldName].path; // Cloudinary URL
-        }
+    // Function to upload files to Cloudinary and delete them from the local server after upload
+    const cloudinaryUploads = async (filePaths) => {
+      const uploadPromises = filePaths.map(async (filePath) => {
+        const uploadResult = await cloudinary.uploader.upload(filePath, {
+          folder: "doctor_documents", 
+        });
+        fs.unlinkSync(filePath); 
+        return uploadResult.secure_url;
       });
+      return await Promise.all(uploadPromises); 
+    };
 
-      // Map year-wise marksheets into academicYearMarksheets
-      documents.medicalDegreeDocuments.academicYearMarksheets = [
-        { year: "1st Year", filePath: req.files.firstYearMarksheet?.[0]?.path },
-        {
-          year: "2nd Year",
-          filePath: req.files.secondYearMarksheet?.[0]?.path,
-        },
-        { year: "3rd Year", filePath: req.files.thirdYearMarksheet?.[0]?.path },
-        {
-          year: "4th Year",
-          filePath: req.files.fourthYearMarksheet?.[0]?.path,
-        },
-        { year: "5th Year", filePath: req.files.fifthYearMarksheet?.[0]?.path },
-      ].filter((marksheet) => marksheet.filePath); // Exclude empty fields
-    }
+    // Upload the documents to Cloudinary and store the URLs in the database
+    const uploadedFiles = {
+      educationalQualifications: {
+        tenthMarksheet: documents.educationalQualifications.tenthMarksheet
+          ? await cloudinaryUploads([
+              documents.educationalQualifications.tenthMarksheet,
+            ])[0]
+          : undefined,
+        twelfthMarksheet: documents.educationalQualifications.twelfthMarksheet
+          ? await cloudinaryUploads([
+              documents.educationalQualifications.twelfthMarksheet,
+            ])[0]
+          : undefined,
+      },
+      medicalDegreeDocuments: {
+        degreeCertificate: documents.medicalDegreeDocuments.degreeCertificate
+          ? await cloudinaryUploads([
+              documents.medicalDegreeDocuments.degreeCertificate,
+            ])[0]
+          : undefined,
+        academicYearMarksheets: await cloudinaryUploads(
+          documents.medicalDegreeDocuments.academicYearMarksheets.map(
+            (marksheet) => marksheet.filePath
+          )
+        ),
+      },
+      photograph: documents.photograph
+        ? await cloudinaryUploads([documents.photograph])[0]
+        : undefined,
+      mciRegistration: documents.mciRegistration
+        ? await cloudinaryUploads([documents.mciRegistration])[0]
+        : undefined,
+    };
 
-    documents.medicalDegreeDocuments.degreeCertificate =
-      req.files.degreeCertificate?.[0]?.path;
-
-    // Ensure that required fields are present and valid
-    if (!documents.medicalDegreeDocuments.degreeCertificate) {
-      return res.status(400).json({
-        status: "error",
-        message: "Medical Degree Certificate is required.",
-      });
-    }
-    if (!aadharCardNumber) {
-      return res.status(400).json({
-        status: "error",
-        message: "Aadhar card number is required.",
-      });
-    }
-    if (!mobileNumber) {
-      return res.status(400).json({
-        status: "error",
-        message: "Mobile number is required.",
-      });
-    }
-    if (!status || !["pending", "approved", "rejected"].includes(status)) {
-      return res.status(400).json({
-        status: "error",
-        message:
-          "Invalid status. Valid statuses are: Pending, Approved, Rejected.",
-      });
-    }
-
-    // Create the doctor record in the database
+    // Create doctor record in the database with Cloudinary URLs
     const doctor = await Doctor.create({
       name,
       registrationNumber,
       clinicName,
       degree,
       aadharCardNumber,
-      contactInfo: { phone: mobileNumber, email: email },
+      contactInfo: { phone: mobileNumber, email },
       clinics: [
         {
           clinicName,
@@ -114,26 +132,20 @@ exports.registerDoctor = catchAsync(async (req, res) => {
           },
         },
       ],
-      documents, // Store document URLs
+      documents: uploadedFiles, 
       status,
     });
 
-    // Create the verification record
-    // await DoctorVerification.create({
-    //   doctor: doctor._id,
-    //   documents,
-    // });
-
-    // Respond with the created doctor details
     res.status(201).json({
       status: "success",
+      message: "Doctor registered successfully!",
       data: { doctor },
     });
   } catch (error) {
     console.error("Error in registerDoctor:", error.message);
     res.status(500).json({
       status: "error",
-      message: error.message || "Something went wrong.",
+      message: "Something went wrong!",
     });
   }
 });

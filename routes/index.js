@@ -20,11 +20,15 @@ router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/doctors", doctorRoutes);
 router.use("/hospitals", hospitalRoutes);
+
+
+router.use("/bulk-order", bulkOrderRoutes);
 router.use("/pharmacies", pharmacyRoutes);
+
 router.use("/pathology", pathologyRoutes);
 router.use("/diagnostic", diagnosticRoutes);
 router.use("/blood-bank", bloodBankRoutes);
-router.use("/bulk-order", bulkOrderRoutes);
+
 router.use("/ads", advertisementRoutes);
 router.use("/packages", packageRoutes);
 router.use("/subscriptions", subscriptionRoutes);

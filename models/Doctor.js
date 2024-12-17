@@ -3,6 +3,10 @@ const mongoose = require("mongoose");
 const doctorSchema = new mongoose.Schema(
   {
     name: { type: String, required: [true, "Name is required"], trim: true },
+    doctorId: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
     registrationNumber: { type: String, required: true, unique: true },
     clinicName: { type: String, required: true, trim: true },
     verification: { type: Boolean, default: false },

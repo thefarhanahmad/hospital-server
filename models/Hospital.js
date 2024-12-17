@@ -17,7 +17,6 @@ const hospitalSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "User",
     },
-
     name: {
       type: String,
       required: [true, "Hospital name is required"],

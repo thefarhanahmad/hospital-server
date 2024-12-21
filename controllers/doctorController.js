@@ -9,112 +9,95 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const fs = require("fs");
 exports.registerDoctor = catchAsync(async (req, res) => {
-  try {
-    const {
-      name,
-      registrationNumber,
-      clinicName,
-      degree,
-      aadharCardNumber,
-      mobileNumber,
-      clinicLocation,
-      latitude,
-      longitude,
-      status,
-      email,
-    } = req.body;
+  const {
+    name,
+    registrationNumber,
+    clinicName,
+    degree,
+    aadharCardNumber,
+    mobileNumber,
+    clinicLocation,
+    latitude,
+    longitude,
+    status,
+    email,
+  } = req.body;
 
-    // Check if user already exists
-    const alreadyUser = await Doctor.findOne({ contactInfo: { email: email } });
-    if (alreadyUser) {
-      return res.status(400).json({
-        status: "error",
-        message: "User already exists with this email.",
-      });
-    }
+  const existingDoctor = await Doctor.findOne({ "contactInfo.email": email });
+  if (existingDoctor) {
+    return res.status(400).json({
+      status: "error",
+      message: "User already exists with this email.",
+    });
+  }
 
-    // Prepare the documents object to store file paths
-    const documents = {
-      educationalQualifications: {
-        tenthMarksheet: req.files.tenthMarksheet?.[0]?.path,
-        twelfthMarksheet: req.files.twelfthMarksheet?.[0]?.path,
-      },
-      medicalDegreeDocuments: {
-        degreeCertificate: req.files.degreeCertificate?.[0]?.path,
-        academicYearMarksheets: [
-          {
-            year: "1st Year",
-            filePath: req.files.firstYearMarksheet?.[0]?.path,
-          },
-          {
-            year: "2nd Year",
-            filePath: req.files.secondYearMarksheet?.[0]?.path,
-          },
-          {
-            year: "3rd Year",
-            filePath: req.files.thirdYearMarksheet?.[0]?.path,
-          },
-          {
-            year: "4th Year",
-            filePath: req.files.fourthYearMarksheet?.[0]?.path,
-          },
-          {
-            year: "5th Year",
-            filePath: req.files.fifthYearMarksheet?.[0]?.path,
-          },
-        ].filter((marksheet) => marksheet.filePath),
-      },
-      photograph: req.files.doctorPhotograph?.[0]?.path,
-      mciRegistration: req.files.mciRegistration?.[0]?.path,
-    };
-
-    // Function to upload files to Cloudinary and delete them from the local server after upload
-    const cloudinaryUploads = async (filePaths) => {
-      const uploadPromises = filePaths.map(async (filePath) => {
-        const uploadResult = await cloudinary.uploader.upload(filePath, {
+  // Function to upload a single file to Cloudinary with retries
+  const uploadToCloudinary = async (file, retries = 3) => {
+    if (!file) return null;
+    for (let i = 0; i < retries; i++) {
+      try {
+        const result = await cloudinary.uploader.upload(file.path, {
           folder: "doctor_documents",
         });
-        fs.unlinkSync(filePath);
-        return uploadResult.secure_url;
-      });
-      return await Promise.all(uploadPromises);
-    };
+        fs.unlinkSync(file.path); // Delete local file
+        return result.secure_url;
+      } catch (error) {
+        console.error(`Cloudinary upload failed (attempt ${i + 1}):`, error);
+        if (i === retries - 1)
+          throw new Error("Failed to upload file to Cloudinary");
+      }
+    }
+  };
 
-    // Upload the documents to Cloudinary and store the URLs in the database
-    const uploadedFiles = {
+  // Function to upload multiple files to Cloudinary
+  const uploadMultipleToCloudinary = async (files) => {
+    if (!files || files.length === 0) return [];
+    const uploadPromises = files.map((file) => uploadToCloudinary(file));
+    return Promise.all(uploadPromises);
+  };
+
+  try {
+    // Upload documents to Cloudinary
+    const uploadedDocuments = {
       educationalQualifications: {
-        tenthMarksheet: documents.educationalQualifications.tenthMarksheet
-          ? await cloudinaryUploads([
-              documents.educationalQualifications.tenthMarksheet,
-            ])[0]
-          : undefined,
-        twelfthMarksheet: documents.educationalQualifications.twelfthMarksheet
-          ? await cloudinaryUploads([
-              documents.educationalQualifications.twelfthMarksheet,
-            ])[0]
-          : undefined,
-      },
-      medicalDegreeDocuments: {
-        degreeCertificate: documents.medicalDegreeDocuments.degreeCertificate
-          ? await cloudinaryUploads([
-              documents.medicalDegreeDocuments.degreeCertificate,
-            ])[0]
-          : undefined,
-        academicYearMarksheets: await cloudinaryUploads(
-          documents.medicalDegreeDocuments.academicYearMarksheets.map(
-            (marksheet) => marksheet.filePath
-          )
+        tenthMarksheet: await uploadToCloudinary(req.files.tenthMarksheet?.[0]),
+        twelfthMarksheet: await uploadToCloudinary(
+          req.files.twelfthMarksheet?.[0]
         ),
       },
-      photograph: documents.photograph
-        ? await cloudinaryUploads([documents.photograph])[0]
-        : undefined,
-      mciRegistration: documents.mciRegistration
-        ? await cloudinaryUploads([documents.mciRegistration])[0]
-        : undefined,
+      medicalDegreeDocuments: {
+        degreeCertificate: await uploadToCloudinary(
+          req.files.degreeCertificate?.[0]
+        ),
+        academicYearMarksheets: await Promise.all(
+          [
+            { year: "1st Year", file: req.files.firstYearMarksheet?.[0] },
+            { year: "2nd Year", file: req.files.secondYearMarksheet?.[0] },
+            { year: "3rd Year", file: req.files.thirdYearMarksheet?.[0] },
+            { year: "4th Year", file: req.files.fourthYearMarksheet?.[0] },
+            { year: "5th Year", file: req.files.fifthYearMarksheet?.[0] },
+          ]
+            .map(async (marksheet) =>
+              marksheet.file
+                ? {
+                    year: marksheet.year,
+                    filePath: await uploadToCloudinary(marksheet.file),
+                  }
+                : null
+            )
+            .filter((marksheet) => marksheet !== null)
+        ),
+      },
+      photograph: await uploadToCloudinary(req.files.doctorPhotograph?.[0]),
+      mciRegistration: await uploadToCloudinary(req.files.mciRegistration?.[0]),
     };
 
-    // Create doctor record in the database with Cloudinary URLs
+    // Upload clinic photographs
+    const clinicPhotos = await uploadMultipleToCloudinary(
+      req.files.clinicPhotographs
+    );
+
+    // Create doctor record in the database
     const doctor = await Doctor.create({
       name,
       registrationNumber,
@@ -130,9 +113,10 @@ exports.registerDoctor = catchAsync(async (req, res) => {
             latitude,
             longitude,
           },
+          clinicPhotos,
         },
       ],
-      documents: uploadedFiles,
+      documents: uploadedDocuments,
       status,
     });
 
@@ -142,10 +126,11 @@ exports.registerDoctor = catchAsync(async (req, res) => {
       data: { doctor },
     });
   } catch (error) {
-    console.error("Error in registerDoctor:", error.message);
+    console.error("Error in registerDoctor:", error);
     res.status(500).json({
       status: "error",
-      message: "Something went wrong!",
+      message: "Something went wrong during registration.",
+      error: error.message,
     });
   }
 });

@@ -8,17 +8,19 @@ const {
 } = require("../validations/pharmacyValidation");
 
 const router = express.Router();
-
 // Protected routes
 router.use(protect);
 router.use(restrictTo("pharmacy"));
 
-router.get("/inventory", pharmacyController.getInventory);
+router.post("/create-pharmacy",pharmacyController.createPharmacy)
+router.post("/create-medicine", pharmacyController.createMedicine);
+
 router.post(
   "/inventory",
   validateRequest(inventoryUpdateRules),
-  pharmacyController.updateInventory
+  pharmacyController.createInventory
 );
+router.get("/inventory", pharmacyController.getInventory);
 
 router.post(
   "/billing",

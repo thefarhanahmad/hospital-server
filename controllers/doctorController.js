@@ -4,10 +4,10 @@ const Consultation = require("../models/Consultation");
 const Prescription = require("../models/Prescription");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
-const cloudinary = require("../config/cloudinary")
+const cloudinary = require("../config/cloudinary");
 const mongoose = require("mongoose");
 const User = require("../models/User");
-const fs=require("fs")
+const fs = require("fs");
 exports.registerDoctor = catchAsync(async (req, res) => {
   try {
     const {
@@ -25,7 +25,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     } = req.body;
 
     // Check if user already exists
-    const alreadyUser = await Doctor.findOne({ contactInfo:{email:email}});
+    const alreadyUser = await Doctor.findOne({ contactInfo: { email: email } });
     if (alreadyUser) {
       return res.status(400).json({
         status: "error",
@@ -72,12 +72,12 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     const cloudinaryUploads = async (filePaths) => {
       const uploadPromises = filePaths.map(async (filePath) => {
         const uploadResult = await cloudinary.uploader.upload(filePath, {
-          folder: "doctor_documents", 
+          folder: "doctor_documents",
         });
-        fs.unlinkSync(filePath); 
+        fs.unlinkSync(filePath);
         return uploadResult.secure_url;
       });
-      return await Promise.all(uploadPromises); 
+      return await Promise.all(uploadPromises);
     };
 
     // Upload the documents to Cloudinary and store the URLs in the database
@@ -132,7 +132,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
           },
         },
       ],
-      documents: uploadedFiles, 
+      documents: uploadedFiles,
       status,
     });
 

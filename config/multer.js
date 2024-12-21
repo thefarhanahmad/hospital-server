@@ -1,19 +1,16 @@
 const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("./cloudinary");
 
-const fs =require("fs")
-const path=require("path")
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../uploads"); // Local directory for file storage
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath); // Create the directory if it doesn't exist
-    }
-    cb(null, uploadPath); // Store files locally in the uploads directory
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique file name with timestamp
+// Set up Multer with Cloudinary Storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "hospital/blogs", // Folder where the images will be stored on Cloudinary
+    allowed_formats: ["jpg", "jpeg", "png"], // Only allow image formats
   },
 });
+
 const upload = multer({ storage });
 
 module.exports = upload;

@@ -3,6 +3,7 @@ const blogController = require("../controllers/blogController");
 const { protect, restrictTo } = require("../middleware/auth");
 const { validateRequest } = require("../middleware/validateRequest");
 const { blogValidation } = require("../validations/blogValidation");
+const upload = require("../config/multer");
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.post(
   "/",
   restrictTo("admin", "doctor"),
   validateRequest(blogValidation),
+  upload.single("featuredImage"),
   blogController.createBlog
 );
 

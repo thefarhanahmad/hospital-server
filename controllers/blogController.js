@@ -1,13 +1,43 @@
 const Blog = require("../models/Blog");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const { cloudinary } = require("../config/cloudinary");
 
 exports.createBlog = catchAsync(async (req, res) => {
-  const blog = await Blog.create({
-    ...req.body,
-    author: req.user._id,
-  });
+  // Extracting fields from the request body
+  const { title, content, category, tags, meta, status } = req.body;
 
+  // Ensure required fields are present
+  if (!title || !content || !category || !status) {
+    return res.status(400).json({
+      status: "fail",
+      message: "Title, content, category, and status are required.",
+    });
+  }
+
+  // Prepare the blog data
+  const blogData = {
+    title,
+    content,
+    category,
+    tags: tags ? JSON.parse(tags) : [], // Parse tags if provided as a JSON string
+    meta: meta ? JSON.parse(meta) : {}, // Parse meta if provided as a JSON string
+    status,
+    author: req.user._id, // Assuming the user is logged in and req.user contains user info
+  };
+
+  // Check if an image was uploaded
+  if (req.file) {
+    blogData.featuredImage = {
+      url: req.file.path, // Cloudinary URL of the uploaded image
+      alt: req.body.imageAlt || "Featured image", // Optional alt text for the image
+    };
+  }
+
+  // Create the blog post in the database
+  const blog = await Blog.create(blogData);
+
+  // Respond with the created blog data
   res.status(201).json({
     status: "success",
     data: { blog },

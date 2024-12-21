@@ -9,13 +9,12 @@ const cors = require("cors");
 const morgan = require("morgan");
 const app = express();
 
-// Allow requests from localhost:3000
 app.use(morgan("combined"));
 app.use(
   cors({
     origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
-    credentials: true, // Enable cookies and authentication headers
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    credentials: true,
   })
 );
 

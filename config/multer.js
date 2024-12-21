@@ -6,8 +6,8 @@ const cloudinary = require("./cloudinary");
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "hospital/blogs", // Folder where the images will be stored on Cloudinary
-    allowed_formats: ["jpg", "jpeg", "png"], // Only allow image formats
+    folder: "hospital", // Folder where the images will be stored on Cloudinary
+    allowed_formats: ["jpg", "jpeg", "png", "webp", "avif"], // Only allow image formats
   },
 });
 

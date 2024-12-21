@@ -1,10 +1,10 @@
 const Blog = require("../models/Blog");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
-const { cloudinary } = require("../config/cloudinary");
 
 exports.createBlog = catchAsync(async (req, res) => {
   // Extracting fields from the request body
+  console.log("blog data from req body : ", req);
   const { title, content, category, tags, meta, status } = req.body;
 
   // Ensure required fields are present
@@ -20,8 +20,8 @@ exports.createBlog = catchAsync(async (req, res) => {
     title,
     content,
     category,
-    tags: tags ? JSON.parse(tags) : [], // Parse tags if provided as a JSON string
-    meta: meta ? JSON.parse(meta) : {}, // Parse meta if provided as a JSON string
+    tags: tags,
+    meta: meta,
     status,
     author: req.user._id, // Assuming the user is logged in and req.user contains user info
   };

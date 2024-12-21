@@ -17,8 +17,8 @@ router.use(protect);
 router.post(
   "/",
   restrictTo("admin", "doctor"),
-  validateRequest(blogValidation),
   upload.single("featuredImage"),
+  validateRequest(blogValidation),
   blogController.createBlog
 );
 
@@ -28,7 +28,8 @@ router
   .route("/:id")
   .patch(
     restrictTo("admin", "doctor"),
-    validateRequest(blogValidation),
+    upload.single("featuredImage"),
+    // validateRequest(blogValidation),
     blogController.updateBlog
   )
   .delete(restrictTo("admin", "doctor"), blogController.deleteBlog);

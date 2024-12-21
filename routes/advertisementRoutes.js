@@ -6,6 +6,7 @@ const {
   advertisementValidation,
   statusUpdateValidation,
 } = require("../validations/advertisementValidation");
+const upload = require("../config/multer");
 
 const router = express.Router();
 
@@ -19,8 +20,9 @@ router.use(protect);
 // Advertiser routes
 router.post(
   "/",
+  upload.single("imageUrl"),
   validateRequest(advertisementValidation),
-  advertisementController.uploadAd
+  advertisementController.createAdvertisement
 );
 router.get("/my-ads", advertisementController.getAdvertiserAds);
 

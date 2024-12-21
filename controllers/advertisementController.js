@@ -2,13 +2,76 @@ const Advertisement = require("../models/Advertisement");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 
-// Upload advertisement
-exports.uploadAd = catchAsync(async (req, res) => {
-  const ad = await Advertisement.create({
-    ...req.body,
-    advertiser: req.user._id,
-  });
+exports.createAdvertisement = catchAsync(async (req, res, next) => {
+  // Extracting fields from the request body
+  const {
+    title,
+    description,
+    imageUrl,
+    targetUrl,
+    type,
+    startDate,
+    endDate,
+    targeting,
+    metrics,
+    placement,
+    status = "pending", // Default status to "pending" if not provided
+  } = req.body;
 
+  // Ensure required fields are present
+  if (
+    !title ||
+    !description ||
+    !targetUrl ||
+    !type ||
+    !startDate ||
+    !endDate ||
+    !placement
+  ) {
+    return next(
+      new AppError(
+        "Title, description, targetUrl, type, startDate, endDate, and placement are required.",
+        400
+      )
+    );
+  }
+
+  // Validate that startDate is in the future and endDate is after startDate
+  const currentDate = new Date();
+  if (new Date(startDate) < currentDate) {
+    return next(new AppError("Start date must be in the future.", 400));
+  }
+
+  if (new Date(endDate) <= new Date(startDate)) {
+    return next(new AppError("End date must be after start date.", 400));
+  }
+
+  // Prepare the advertisement data based on schema
+  const adData = {
+    title,
+    description,
+    targetUrl,
+    type,
+    startDate,
+    endDate,
+    targeting,
+    metrics: metrics || { impressions: 0, clicks: 0 }, // Default metrics if not provided
+    placement,
+    status,
+    advertiser: req.user._id, // Assuming the user is logged in and req.user contains user info
+  };
+
+  // Check if an image was uploaded, otherwise use imageUrl from body
+  if (req.file) {
+    adData.imageUrl = req.file.path; // Assuming the uploaded image path is stored in req.file.path
+  } else if (imageUrl) {
+    adData.imageUrl = imageUrl; // Use the provided imageUrl if no file was uploaded
+  }
+
+  // Create the advertisement in the database
+  const ad = await Advertisement.create(adData);
+
+  // Respond with the created advertisement data
   res.status(201).json({
     status: "success",
     data: { ad },
@@ -90,6 +153,7 @@ exports.getAdvertiserAds = catchAsync(async (req, res) => {
 
 // Update ad status (admin only)
 exports.updateAdStatus = catchAsync(async (req, res, next) => {
+  console.log("req body status : ", req.body);
   const ad = await Advertisement.findByIdAndUpdate(
     req.params.id,
     { status: req.body.status },

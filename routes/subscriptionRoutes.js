@@ -5,7 +5,6 @@ const { validateRequest } = require('../middleware/validateRequest');
 const { subscriptionValidation, usageValidation } = require('../validations/subscriptionValidation');
 
 const router = express.Router();
-
 router.use(protect);
 
 router.post(

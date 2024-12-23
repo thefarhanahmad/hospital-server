@@ -16,6 +16,7 @@ router.post(
   notificationController.sendNotification
 );
 
+
 router.get("/", notificationController.getNotifications);
 router.patch("/:id/read", notificationController.markAsRead);
 router.patch("/read-all", notificationController.markAllAsRead);

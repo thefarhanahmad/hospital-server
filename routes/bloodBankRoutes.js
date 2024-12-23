@@ -20,7 +20,6 @@ router.post(
   bloodBankController.updateInventory
 );
 router.get("/availability", bloodBankController.getAvailability);
-
 // Blood Request Management
 router.post("/requests", bloodBankController.createBloodRequest);
 router.get("/requests", bloodBankController.getBloodRequests);
@@ -29,8 +28,6 @@ router.patch(
   validateRequest(requestStatusValidation),
   bloodBankController.updateRequestStatus
 );
-
 // Billing
 router.post("/billing/:requestId", bloodBankController.generateBill);
-
 module.exports = router;

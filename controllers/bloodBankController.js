@@ -183,6 +183,7 @@ exports.updateRequestStatus = catchAsync(async (req, res, next) => {
         $inc: { quantity: -request.quantity },
       }
     );
+    console.log(inventory)
 
     if (!inventory) {
       return next(new AppError("Insufficient inventory", 400));

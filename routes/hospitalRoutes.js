@@ -18,6 +18,8 @@ router.post(
   hospitalController.registerHospital
 );
 
+
+
 // Protected routes
 router.use(protect);
 router.use(restrictTo("hospital"));

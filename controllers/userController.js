@@ -2,15 +2,6 @@ const User = require('../models/User');
 const { catchAsync } = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
-exports.getAllUsers = catchAsync(async (req, res) => {
-  const users = await User.find().select('-__v');
-  
-  res.status(200).json({
-    status: 'success',
-    results: users.length,
-    data: { users }
-  });
-});
 
 exports.getUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id);
@@ -25,14 +16,7 @@ exports.getUser = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createUser = catchAsync(async (req, res) => {
-  const newUser = await User.create(req.body);
 
-  res.status(201).json({
-    status: 'success',
-    data: { user: newUser }
-  });
-});
 
 exports.updateUser = catchAsync(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(req.params.id, req.body, {

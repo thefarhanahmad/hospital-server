@@ -14,12 +14,12 @@ exports.createPharmacy = async (req, res) => {
     const pharmacy = await Pharmacy.create(pharmacyData);
     res.status(201).json({
       success: true,
-      data: pharmacy
+      data: pharmacy,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -50,7 +50,7 @@ exports.createMedicine = async (req, res) => {
       strength,
       packaging,
       mrp,
-      pharmacyId:req.user._id
+      pharmacyId: req.user._id,
     });
 
     // Save the medicine to the database
@@ -79,6 +79,14 @@ exports.createMedicine = async (req, res) => {
     });
   }
 };
+// get medicine
+exports.getMedicine = catchAsync(async (req, res) => {
+  const medicine = await Medicine.find({ pharmacyId: req.user._id });
+  res.status(200).json({
+    status: "success",
+    data: { medicine: medicine },
+  });
+});
 
 exports.getInventory = catchAsync(async (req, res) => {
   const inventory = await PharmacyInventory.find({ pharmacyId: req.user._id })
@@ -107,9 +115,6 @@ exports.createInventory = catchAsync(async (req, res, next) => {
     purchasePrice,
     sellingPrice,
   } = req.body;
-
-
- 
 
   // Update or create inventory entry
   const inventory = await PharmacyInventory.findOneAndUpdate(

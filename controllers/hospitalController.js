@@ -91,6 +91,8 @@ exports.registerHospital = async (req, res) => {
   }
 };
 
+
+
 exports.verifyHospital = catchAsync(async (req, res, next) => {
   const verification = await HospitalVerification.findOne({
     hospital: req.params.id,

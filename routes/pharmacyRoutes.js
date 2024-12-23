@@ -14,7 +14,7 @@ router.use(restrictTo("pharmacy"));
 
 router.post("/create-pharmacy",pharmacyController.createPharmacy)
 router.post("/create-medicine", pharmacyController.createMedicine);
-
+router.get("/all-medicine", pharmacyController.getMedicine);
 router.post(
   "/inventory",
   validateRequest(inventoryUpdateRules),

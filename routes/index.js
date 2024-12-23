@@ -4,6 +4,7 @@ const userRoutes = require("./userRoutes");
 const doctorRoutes = require("./doctorRoutes");
 const hospitalRoutes = require("./hospitalRoutes");
 const pharmacyRoutes = require("./pharmacyRoutes");
+const adminRoutes = require("./adminRoutes");
 const pathologyRoutes = require("./pathologyRoutes");
 const diagnosticRoutes = require("./diagnosticRoutes");
 const bloodBankRoutes = require("./bloodBankRoutes");
@@ -20,7 +21,7 @@ router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/doctors", doctorRoutes);
 router.use("/hospitals", hospitalRoutes);
-
+router.use("/admin", adminRoutes);
 router.use("/bulk-order", bulkOrderRoutes);
 router.use("/pharmacies", pharmacyRoutes);
 router.use("/pathology", pathologyRoutes);

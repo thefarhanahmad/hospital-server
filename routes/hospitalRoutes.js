@@ -12,18 +12,16 @@ const upload = require("../config/multer");
 const router = express.Router();
 
 const uploadFields = [{ name: "hospitalImages", maxCount: 10 }];
-router.post(
-  "/register",
-  upload.fields(uploadFields),
-  hospitalController.registerHospital
-);
-
 
 
 // Protected routes
 router.use(protect);
 router.use(restrictTo("hospital"));
-
+router.post(
+  "/register",
+  upload.fields(uploadFields),
+  hospitalController.registerHospital
+);
 router.post("/bed-status", hospitalController.createBed);
 router.get("/bed-status", hospitalController.getBedStatus);
 router.put(
@@ -34,7 +32,7 @@ router.put(
 
 router.post(
   "/admission",
-  validateRequest(admissionRules),
+  // validateRequest(admissionRules),
   hospitalController.admitPatient
 );
 // router.get("/admission", hospitalController.getAdmitPatients);

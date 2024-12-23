@@ -4,7 +4,7 @@ const bedInventorySchema = new mongoose.Schema(
   {
     hospital: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Hospital",
+      ref: "User",
       required: true,
     },
     ward: {

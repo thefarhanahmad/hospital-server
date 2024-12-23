@@ -78,6 +78,44 @@ exports.getReports = catchAsync(async (req, res) => {
   });
 });
 
+//Inventory Create
+exports.createInventory = async (req, res) => {
+  try {
+    const {
+      lab,
+      item,
+      batchNumber,
+      quantity,
+      reorderLevel,
+      expiryDate,
+      location,
+      status,
+    } = req.body;
+
+    // Create a new inventory item
+    const newInventory = new PathologyInventory({
+     lab:req.user._id,
+      item,
+      batchNumber,
+      quantity,
+      reorderLevel,
+      expiryDate,
+      location,
+      status,
+    });
+
+    // Save to the database
+    await newInventory.save();
+
+    res.status(201).json({
+      message: "Inventory item created successfully.",
+      inventory: newInventory,
+    });
+  } catch (error) {
+    console.error("Error creating inventory item:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
 // Inventory Management
 exports.getInventory = catchAsync(async (req, res) => {
   const inventory = await PathologyInventory.find({

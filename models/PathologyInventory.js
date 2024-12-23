@@ -4,7 +4,7 @@ const pathologyInventorySchema = new mongoose.Schema(
   {
     lab: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PathologyLab",
+      ref: "User",
       required: true,
     },
     item: {

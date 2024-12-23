@@ -22,6 +22,7 @@ router.post('/report', validateRequest(reportValidation), pathologyController.ge
 router.get('/reports', pathologyController.getReports);
 
 // Inventory Management
+router.post('/inventory', pathologyController.createInventory);
 router.get('/inventory', pathologyController.getInventory);
 
 module.exports = router;

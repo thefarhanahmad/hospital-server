@@ -11,8 +11,10 @@ const { catchAsync } = require("../utils/catchAsync");
 const Doctor = require("../models/Doctor");
 const Package = require("../models/Package");
 const PathologyLab = require("../models/PathologyLab");
-const Diagnostic = require("../models/Diagnostic")
-const Equipment = require("../models/Equipment")
+const Diagnostic = require("../models/Diagnostic");
+const Equipment = require("../models/Equipment");
+const doctorCategory = require("../models/doctorCategory");
+const medicineCategory = require("../models/medicineCategory");
 exports.getAllHospital = catchAsync(async (req, res) => {
   const hospitals = await Hospital.find();
   res.status(200).json({
@@ -168,5 +170,75 @@ exports.createUserPackage = catchAsync(async (req, res) => {
   res.status(201).json({
     status: "success",
     data: { package },
+  });
+});
+
+exports.addCategory = catchAsync(async (req, res) => {
+  try {
+    const { name } = req.body;
+    const existingCategory = await doctorCategory.findOne({ name });
+    if (existingCategory) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Category already exists" });
+    }
+    const category = new doctorCategory({ name });
+    await category.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Category added successfully",
+      category,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error adding category",
+      error: error.message,
+    });
+  }
+});
+
+exports.addMedicineCategory = catchAsync(async (req, res) => {
+  try {
+    const { name } = req.body;
+    const existingCategory = await medicineCategory.findOne({ name });
+    if (existingCategory) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Category already exists" });
+    }
+    const category = new medicineCategory({ name });
+    await category.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Medicine Category added successfully",
+      category,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error adding category",
+      error: error.message,
+    });
+  }
+});
+exports.getAllDoctorCategory = catchAsync(async (req, res) => {
+  const doctorCategories = await doctorCategory.find();
+  res.status(200).json({
+    status: 'success',
+    message: 'All doctor categories retrieved successfully.',
+    data: doctorCategories,
+  });
+});
+
+// Get all Medicine Categories
+exports.getAllMedicineCategory = catchAsync(async (req, res) => {
+  const medicineCategories = await medicineCategory.find();
+  res.status(200).json({
+    status: 'success',
+    message: 'All medicine categories retrieved successfully.',
+    data: medicineCategories,
   });
 });

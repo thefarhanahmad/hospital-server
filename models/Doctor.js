@@ -7,6 +7,10 @@ const doctorSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "User",
     },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+    },
     registrationNumber: { type: String, required: true, unique: true },
     clinicName: { type: String, required: true, trim: true },
     verification: { type: Boolean, default: false },

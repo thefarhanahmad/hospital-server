@@ -18,12 +18,20 @@ router.get("/all-doctors", adminController.getAllDoctors);
 router.get("/all-patient", adminController.getAllPatient);
 router.get("/all-appointments", adminController.getAllAppointments);
 router.get("/all-medicines", adminController.getAllMedicines);
+
+
 router.get("/all-badInventries", adminController.getAllbadInventries);
 router.get("/all-bloodInventries", adminController.getAllbloodInventries);
+
 router.get(
   "/all-pathologyInventries",
   adminController.getAllPathologyInventries
 );
+
+router.post("/doctor-category", adminController.addCategory);
+router.post("/medicine-category", adminController.addMedicineCategory);
+router.get("/all-doctor-category", adminController.getAllDoctorCategory);
+router.get("/all-medicine-category", adminController.getAllMedicineCategory)
 router.get("/all-users", adminController.getAllUsers);
 router.post("/create-user", adminController.createUser);
 router.delete("/delete-user/:id", adminController.deleteUser);

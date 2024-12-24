@@ -8,6 +8,7 @@ const cloudinary = require("../config/cloudinary");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const fs = require("fs");
+
 exports.registerDoctor = catchAsync(async (req, res) => {
   const {
     name,
@@ -21,6 +22,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     longitude,
     status,
     email,
+    category
   } = req.body;
 
   const existingDoctor = await Doctor.findOne({ "contactInfo.email": email });
@@ -57,7 +59,6 @@ exports.registerDoctor = catchAsync(async (req, res) => {
   };
 
   try {
-    // Upload documents to Cloudinary
     const uploadedDocuments = {
       educationalQualifications: {
         tenthMarksheet: await uploadToCloudinary(req.files.tenthMarksheet?.[0]),
@@ -100,6 +101,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     // Create doctor record in the database
     const doctor = await Doctor.create({
       name,
+      category
       registrationNumber,
       clinicName,
       degree,
@@ -235,3 +237,4 @@ exports.getPrescriptions = catchAsync(async (req, res) => {
     data: { prescriptions },
   });
 });
+

@@ -49,6 +49,8 @@ router.post(
   doctorController.createPrescription
 );
 
+
+
 router.get("/prescriptions", doctorController.getPrescriptions);
 
 // Admin only routes

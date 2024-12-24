@@ -4,6 +4,7 @@ const PharmacyBill = require("../models/PharmacyBill");
 const Medicine = require("../models/Medicine");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const medicineCategory = require("../models/medicineCategory");
 
 // Create a Pharmacy
 exports.createPharmacy = async (req, res) => {
@@ -37,6 +38,7 @@ exports.createMedicine = async (req, res) => {
       strength,
       packaging,
       mrp,
+      mainCategory
     } = req.body;
 
     const newMedicine = new Medicine({
@@ -51,6 +53,7 @@ exports.createMedicine = async (req, res) => {
       packaging,
       mrp,
       pharmacyId: req.user._id,
+      mainCategory,
     });
 
     // Save the medicine to the database

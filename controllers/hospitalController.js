@@ -32,9 +32,9 @@ exports.registerHospital = async (req, res) => {
         message: "Provided email is not associated with any user.",
       });
     }
-  const dataImage = req.files.hospitalImages.map((ele, i) => {
-     return ele.path
-    })
+    const dataImage = req.files.hospitalImages.map((ele, i) => {
+      return ele.path;
+    });
 
     const hospital = await Hospital.create({
       registrationNumber,
@@ -42,7 +42,7 @@ exports.registerHospital = async (req, res) => {
       email,
       name,
       cmoNumber,
-      hospitalImages:dataImage,
+      hospitalImages: dataImage,
       insuranceServices: {
         ...insuranceServices,
         ayushmanBharat: {
@@ -244,5 +244,3 @@ exports.dischargePatient = catchAsync(async (req, res, next) => {
     data: { admission },
   });
 });
-
-

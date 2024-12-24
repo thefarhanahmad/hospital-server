@@ -244,3 +244,5 @@ exports.dischargePatient = catchAsync(async (req, res, next) => {
     data: { admission },
   });
 });
+
+

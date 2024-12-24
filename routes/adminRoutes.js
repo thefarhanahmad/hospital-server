@@ -1,7 +1,7 @@
 const express = require("express");
 const adminController = require("../controllers/adminController");
 const { protect, restrictTo } = require("../middleware/auth");
-const { packageValidation } = require('../validations/packageValidation');
+const { packageValidation } = require("../validations/packageValidation");
 const { validateRequest } = require("../middleware/validateRequest");
 
 const router = express.Router();
@@ -11,6 +11,9 @@ router.use(restrictTo("admin"));
 
 router.get("/all-hospitals", adminController.getAllHospital);
 router.get("/all-pharmacy", adminController.getAllPharmacy);
+router.get("/all-pathology", adminController.getAllPathology);
+router.get("/all-diagnostic", adminController.getAllDiagnostic);
+router.get("/all-equipment", adminController.getAllEquipment);
 router.get("/all-doctors", adminController.getAllDoctors);
 router.get("/all-patient", adminController.getAllPatient);
 router.get("/all-appointments", adminController.getAllAppointments);
@@ -31,6 +34,6 @@ router.post(
   validateRequest(packageValidation),
   adminController.createUserPackage
 );
-
+router.get("/get-package", adminController.getUserPackages);
 
 module.exports = router;

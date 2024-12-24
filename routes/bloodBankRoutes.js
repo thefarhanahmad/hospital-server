@@ -8,6 +8,8 @@ const {
 } = require("../validations/bloodBankValidation");
 
 const router = express.Router();
+// Billing
+router.post("/billing/:requestId", bloodBankController.generateBill);
 
 // Protected routes
 router.use(protect);
@@ -28,6 +30,7 @@ router.patch(
   validateRequest(requestStatusValidation),
   bloodBankController.updateRequestStatus
 );
-// Billing
-router.post("/billing/:requestId", bloodBankController.generateBill);
+
+// Admin only routes
+
 module.exports = router;

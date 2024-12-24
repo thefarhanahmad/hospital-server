@@ -10,7 +10,9 @@ const BloodInventries = require("../models/BloodInventory");
 const { catchAsync } = require("../utils/catchAsync");
 const Doctor = require("../models/Doctor");
 const Package = require("../models/Package");
-const Subscription = require("../models/Subscription");
+const PathologyLab = require("../models/PathologyLab");
+const Diagnostic = require("../models/Diagnostic")
+const Equipment = require("../models/Equipment")
 exports.getAllHospital = catchAsync(async (req, res) => {
   const hospitals = await Hospital.find();
   res.status(200).json({
@@ -32,6 +34,43 @@ exports.getAllPharmacy = catchAsync(async (req, res) => {
     data: { pharmacy },
   });
 });
+
+exports.getAllPathology = catchAsync(async (req, res) => {
+  const pathologyLab = await PathologyLab.find();
+  res.status(200).json({
+    status: "success",
+    message: "all pathology List Retrieve Successfully",
+    data: pathologyLab,
+  });
+});
+exports.getAllDiagnostic = catchAsync(async (req, res) => {
+  const diagnostic = await Diagnostic.find();
+  res.status(200).json({
+    status: "success",
+    message: "all Diagnostic List Retrieve Successfully",
+    data: diagnostic,
+  });
+});
+exports.getAllEquipment = catchAsync(async (req, res) => {
+  const equipment = await Equipment.find();
+  res.status(200).json({
+    status: "success",
+    message: "all equipment List Retrieve Successfully",
+    data: equipment,
+  });
+});
+
+exports.getUserPackages = catchAsync(async (req, res) => {
+  const packages = await Package.find({
+    active: true,
+  }).sort("priority");
+
+  res.status(200).json({
+    status: "success",
+    results: packages.length,
+    data: { packages },
+  });
+});
 exports.getAllPatient = catchAsync(async (req, res) => {
   const patient = await Patient.find();
   res.status(200).json({
@@ -46,6 +85,7 @@ exports.getAllAppointments = catchAsync(async (req, res) => {
     data: { appointment },
   });
 });
+
 exports.getAllMedicines = catchAsync(async (req, res) => {
   const allMedicine = await Medicine.find();
   res.status(200).json({
@@ -130,4 +170,3 @@ exports.createUserPackage = catchAsync(async (req, res) => {
     data: { package },
   });
 });
-

@@ -66,9 +66,6 @@ exports.getAvailability = catchAsync(async (req, res) => {
 exports.generateBill = catchAsync(async (req, res, next) => {
   const request = await BloodRequest.findById(req.params.requestId);
 
-  if (!request || request.bloodBank.toString() !== req.user._id.toString()) {
-    return next(new AppError("Blood request not found", 404));
-  }
 
   if (request.status !== "approved") {
     return next(
@@ -150,6 +147,7 @@ exports.getBloodRequests = catchAsync(async (req, res) => {
 });
 
 exports.updateRequestStatus = catchAsync(async (req, res, next) => {
+
   const request = await BloodRequest.findOneAndUpdate(
     {
       _id: req.params.requestId,
@@ -164,10 +162,12 @@ exports.updateRequestStatus = catchAsync(async (req, res, next) => {
       runValidators: true,
     }
   );
+  console.log(request)
 
   if (!request) {
     return next(new AppError("Blood request not found", 404));
   }
+
 
   // Update inventory if request is approved
   if (req.body.status === "approved") {

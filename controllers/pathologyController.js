@@ -3,8 +3,45 @@ const PathologyReport = require("../models/PathologyReport");
 const PathologyInventory = require("../models/PathologyInventory");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
-
+const Equipment = require("../models/Equipment");
+const PathologyLab = require("../models/PathologyLab");
 // Test Management
+
+exports.createPathologyLab = catchAsync(async (req, res) => {
+  try {
+    const {
+      name,
+      licenseNumber,
+      contactInfo,
+      address,
+      tests,
+      certifications,
+      sampleCollection,
+    } = req.body;
+    const newPathologyLab = new PathologyLab({
+      userId: req.user._id,
+      name,
+      licenseNumber,
+      contactInfo,
+      address,
+      tests,
+      certifications,
+      sampleCollection,
+    });
+    await newPathologyLab.save();
+
+    return res.status(201).json({
+      message: "Pathology lab created successfully",
+      data: newPathologyLab,
+    });
+  } catch (error) {
+    console.error("Error creating pathology lab:", error);
+    return res.status(500).json({
+      message: "Failed to create pathology lab",
+      error: error.message,
+    });
+  }
+});
 exports.addTest = catchAsync(async (req, res) => {
   console.log("req user pathlab : ", req.user);
 
@@ -94,7 +131,7 @@ exports.createInventory = async (req, res) => {
 
     // Create a new inventory item
     const newInventory = new PathologyInventory({
-     lab:req.user._id,
+      lab: req.user._id,
       item,
       batchNumber,
       quantity,
@@ -140,3 +177,42 @@ exports.getInventory = catchAsync(async (req, res) => {
     data: { inventory: updatedInventory },
   });
 });
+
+exports.createEquipment = async (req, res) => {
+  try {
+    const { name, model, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: "Equipment name is required" });
+    }
+
+    const equipment = new Equipment({
+      userId: req.user._id,
+      name,
+      model,
+      description,
+    });
+
+    await equipment.save();
+    res.status(201).json({
+      message: "Equipment created successfully",
+      equipment,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getAllEquipment = async (req, res) => {
+  try {
+    const equipment = await Equipment.find();
+    res.status(200).json({
+      userId: req.user._id,
+      status: true,
+      message: "all Equipment get successfully",
+      data: equipment,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

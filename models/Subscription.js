@@ -64,7 +64,7 @@ const subscriptionSchema = new mongoose.Schema(
         limit: Number,
       },
       storage: {
-        used: { type: Number, default: 0 }, // in GB
+        used: { type: Number, default: 0 }, 
         limit: Number,
       },
     },

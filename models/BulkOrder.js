@@ -50,7 +50,7 @@ const bulkOrderSchema = new mongoose.Schema(
     supplierType: {
       type: String,
       required: true,
-      enum: ["Pharmacy", "Supplier"],
+      enum: ["Pharmacy","Pathology", "Supplier"],
     },
     status: {
       type: String,

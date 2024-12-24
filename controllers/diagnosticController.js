@@ -168,3 +168,11 @@ exports.getReports = catchAsync(async (req, res) => {
     data: { reports },
   });
 });
+exports.getAllDiagnostic = catchAsync(async (req, res) => {
+  const diagnostic = await Diagnostic.find();
+  res.status(200).json({
+    status: "success",
+    message: "all Diagnostic List Retrieve Successfully",
+    data: diagnostic,
+  });
+});

@@ -31,7 +31,7 @@ router.post(
 );
 
 router.get("/tests", diagnosticController.getTests);
-
+router.get("/all-diagnostic", diagnosticController.getAllDiagnostic);
 // Report Management
 router.post(
   "/report",

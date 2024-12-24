@@ -101,7 +101,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     // Create doctor record in the database
     const doctor = await Doctor.create({
       name,
-      category
+      category,
       registrationNumber,
       clinicName,
       degree,

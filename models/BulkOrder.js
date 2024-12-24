@@ -6,7 +6,7 @@ const bulkOrderSchema = new mongoose.Schema(
     orderedBy: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: "ordererType",
+      ref: "User",
     },
     ordererType: {
       type: String,

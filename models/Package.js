@@ -9,6 +9,7 @@ const packageSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ['user', 'vendor'],
+    default:"user",
     required: true
   },
   vendorType: {

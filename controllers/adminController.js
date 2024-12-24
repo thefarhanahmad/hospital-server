@@ -5,10 +5,12 @@ const Patient = require("../models/PatientAdmission");
 const Appointment = require("../models/Appointment");
 const Medicine = require("../models/Medicine");
 const BadInventries = require("../models/BedInventory");
-const PathologyInventries = require("../models/PathologyInventory")
+const PathologyInventries = require("../models/PathologyInventory");
 const BloodInventries = require("../models/BloodInventory");
 const { catchAsync } = require("../utils/catchAsync");
 const Doctor = require("../models/Doctor");
+const Package = require("../models/Package");
+const Subscription = require("../models/Subscription");
 exports.getAllHospital = catchAsync(async (req, res) => {
   const hospitals = await Hospital.find();
   res.status(200).json({
@@ -66,12 +68,12 @@ exports.getAllbloodInventries = catchAsync(async (req, res) => {
   });
 });
 exports.getAllPathologyInventries = catchAsync(async (req, res) => {
-    const pathologyInventries = await PathologyInventries.find();
-    res.status(200).json({
-      status: "success",
-      data: { pathologyInventries },
-    });
+  const pathologyInventries = await PathologyInventries.find();
+  res.status(200).json({
+    status: "success",
+    data: { pathologyInventries },
   });
+});
 exports.getAllUsers = catchAsync(async (req, res) => {
   const users = await User.find().select("-__v");
 
@@ -117,3 +119,15 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     data: { user },
   });
 });
+
+exports.createUserPackage = catchAsync(async (req, res) => {
+  const package = await Package.create({
+    ...req.body,
+  });
+
+  res.status(201).json({
+    status: "success",
+    data: { package },
+  });
+});
+

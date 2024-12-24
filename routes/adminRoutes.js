@@ -1,6 +1,8 @@
 const express = require("express");
 const adminController = require("../controllers/adminController");
 const { protect, restrictTo } = require("../middleware/auth");
+const { packageValidation } = require('../validations/packageValidation');
+const { validateRequest } = require("../middleware/validateRequest");
 
 const router = express.Router();
 router.use(protect);
@@ -15,11 +17,20 @@ router.get("/all-appointments", adminController.getAllAppointments);
 router.get("/all-medicines", adminController.getAllMedicines);
 router.get("/all-badInventries", adminController.getAllbadInventries);
 router.get("/all-bloodInventries", adminController.getAllbloodInventries);
-router.get("/all-pathologyInventries", adminController.getAllPathologyInventries);
+router.get(
+  "/all-pathologyInventries",
+  adminController.getAllPathologyInventries
+);
 router.get("/all-users", adminController.getAllUsers);
 router.post("/create-user", adminController.createUser);
 router.delete("/delete-user/:id", adminController.deleteUser);
 router.patch("/update-user/:id", adminController.updateUser);
+
+router.post(
+  "/create-package",
+  validateRequest(packageValidation),
+  adminController.createUserPackage
+);
 
 
 module.exports = router;

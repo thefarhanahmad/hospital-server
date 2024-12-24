@@ -2,8 +2,49 @@ const DiagnosticTest = require("../models/DiagnosticTest");
 const DiagnosticReport = require("../models/DiagnosticReport");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const Diagnostic = require("../models/Diagnostic");
 
 // Test Rates and Discounts Management
+
+exports.createDiagnostic = catchAsync(async (req, res) => {
+  const {
+    name,
+    licenseNumber,
+    contactInfo,
+    address,
+    services,
+    equipment,
+    accreditations
+  } = req.body;
+
+  // Validate incoming data (optional additional validation can be added)
+  if (!name || !licenseNumber || !contactInfo || !address) {
+    return res.status(400).json({
+      status: 'fail',
+      message: 'Required fields are missing'
+    });
+  }
+
+  // Create new diagnostic center
+  const diagnosticCenter = await Diagnostic.create({
+    name,
+    licenseNumber,
+    contactInfo,
+    address,
+    services,
+    equipment,
+    accreditations
+  });
+
+  // Send response
+  res.status(201).json({
+    status: 'success',
+    data: {
+      diagnosticCenter
+    }
+  });
+});
+
 exports.createTest = catchAsync(async (req, res) => {
   const { basePrice, discountPercentage } = req.body;
   const discountedPrice = discountPercentage

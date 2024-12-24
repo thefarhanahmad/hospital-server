@@ -111,3 +111,4 @@ exports.updateUsage = catchAsync(async (req, res, next) => {
     data: { subscription }
   });
 });
+

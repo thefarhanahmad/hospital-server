@@ -106,11 +106,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     const doctor = await Doctor.create({
       userId:req.user._id,
       name,
-<<<<<<< HEAD
-      populatedDoctor,
-=======
       category,
->>>>>>> 86af3a0cfbb01174589f08d7c96da827ac042044
       registrationNumber,
       category: req.Category._id,
       clinicName,

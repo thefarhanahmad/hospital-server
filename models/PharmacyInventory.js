@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const pharmacyInventorySchema = new mongoose.Schema({
   pharmacyId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Pharmacy',
     required: true
   },
   medicineId: {

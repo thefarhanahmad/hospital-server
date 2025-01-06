@@ -38,7 +38,7 @@ exports.createMedicine = async (req, res) => {
       strength,
       packaging,
       mrp,
-      mainCategory
+      mainCategory,
     } = req.body;
 
     const newMedicine = new Medicine({
@@ -91,6 +91,45 @@ exports.getMedicine = catchAsync(async (req, res) => {
   });
 });
 
+exports.createInventory = async (req, res) => {
+  try {
+    const {
+      pharmacyId,
+      medicineId,
+      batchNumber,
+      quantity,
+      expiryDate,
+      purchasePrice,
+      sellingPrice,
+      reorderLevel,
+      location,
+    } = req.body;
+    const newInventory = new PharmacyInventory({
+      pharmacyId,
+      medicineId,
+      batchNumber,
+      quantity,
+      expiryDate,
+      purchasePrice,
+      sellingPrice,
+      reorderLevel,
+      location,
+    });
+    await newInventory.save();
+    res.status(201).json({
+      message: "Inventory created successfully!",
+      data: newInventory,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error(error);
+    res.status(500).json({
+      message: "Error creating inventory.",
+      error: error.message,
+    });
+  }
+};
+
 exports.getInventory = catchAsync(async (req, res) => {
   const inventory = await PharmacyInventory.find({ pharmacyId: req.user._id })
     .populate("medicineId")
@@ -109,37 +148,20 @@ exports.getInventory = catchAsync(async (req, res) => {
   });
 });
 
-exports.createInventory = catchAsync(async (req, res, next) => {
-  const {
-    medicineId,
-    batchNumber,
-    quantity,
-    expiryDate,
-    purchasePrice,
-    sellingPrice,
-  } = req.body;
+exports.updateInventory = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
 
-  // Update or create inventory entry
-  const inventory = await PharmacyInventory.findOneAndUpdate(
-    {
-      pharmacyId: req.user._id,
-      medicineId: medicineId,
-      batchNumber,
-    },
-    {
-      quantity,
-      expiryDate,
-      purchasePrice,
-      sellingPrice,
-      ...req.body,
-      pharmacyId: req.user._id,
-    },
-    {
-      new: true,
-      upsert: true,
-      runValidators: true,
-    }
-  );
+  const inventory = await PharmacyInventory.findByIdAndUpdate(id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!inventory) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Inventory item not found",
+    });
+  }
 
   res.status(200).json({
     status: "success",

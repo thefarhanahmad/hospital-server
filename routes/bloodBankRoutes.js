@@ -10,12 +10,13 @@ const {
 const router = express.Router();
 // Billing
 router.post("/billing/:requestId", bloodBankController.generateBill);
-
 // Protected routes
 router.use(protect);
 router.use(restrictTo("bloodbank"));
+router.post("/create-blood-bank", bloodBankController.createBloodBank);
 
 // Inventory Management
+
 router.post(
   "/inventory",
   validateRequest(inventoryValidation),

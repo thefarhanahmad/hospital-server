@@ -13,9 +13,11 @@ const advertisementRoutes = require("./advertisementRoutes");
 const packageRoutes = require("./packageRoutes");
 const subscriptionRoutes = require("./subscriptionRoutes");
 const notificationRoutes = require("./notificationRoutes");
-
+const searchRoutes = require("./searchRoutes");
 const blogRoutes = require("./blogRoutes");
 const router = express.Router();
+
+router.use("/search", searchRoutes);
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);

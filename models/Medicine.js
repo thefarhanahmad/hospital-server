@@ -8,14 +8,14 @@ const medicineSchema = new mongoose.Schema(
       trim: true,
     },
     pharmacyId: {
-       type: mongoose.Schema.ObjectId,
-       ref: "User",
-     },
-     mainCategory:{
-      type:mongoose.Schema.Types.ObjectId,
-      ref:"MedicineCategory"
-     },
-   
+      type: mongoose.Schema.ObjectId,
+      ref: "Pharmacy",
+    },
+    mainCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MedicineCategory",
+    },
+
     genericName: {
       type: String,
       required: [true, "Generic name is required"],

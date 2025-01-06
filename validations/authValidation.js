@@ -56,6 +56,7 @@ exports.registerValidationRules = [
     .withMessage("Gender is required")
     .isIn(["male", "female", "other"])
     .withMessage("Invalid gender value"),
+    
 ];
 
 exports.loginValidationRules = [

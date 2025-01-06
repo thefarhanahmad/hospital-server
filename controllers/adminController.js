@@ -15,6 +15,9 @@ const Diagnostic = require("../models/Diagnostic");
 const Equipment = require("../models/Equipment");
 const doctorCategory = require("../models/doctorCategory");
 const medicineCategory = require("../models/medicineCategory");
+const LabCategory = require("../models/labCategory");
+const BloodBank = require("../models/BloodBank");
+
 exports.getAllHospital = catchAsync(async (req, res) => {
   const hospitals = await Hospital.find();
   res.status(200).json({
@@ -36,7 +39,6 @@ exports.getAllPharmacy = catchAsync(async (req, res) => {
     data: { pharmacy },
   });
 });
-
 exports.getAllPathology = catchAsync(async (req, res) => {
   const pathologyLab = await PathologyLab.find();
   res.status(200).json({
@@ -54,14 +56,16 @@ exports.getAllDiagnostic = catchAsync(async (req, res) => {
   });
 });
 exports.getAllEquipment = catchAsync(async (req, res) => {
-  const equipment = await Equipment.find();
+  const equipment = await Equipment.find().populate({
+    path: "labId",
+    select: "name",
+  });
   res.status(200).json({
     status: "success",
     message: "all equipment List Retrieve Successfully",
     data: equipment,
   });
 });
-
 exports.getUserPackages = catchAsync(async (req, res) => {
   const packages = await Package.find({
     active: true,
@@ -74,43 +78,74 @@ exports.getUserPackages = catchAsync(async (req, res) => {
   });
 });
 exports.getAllPatient = catchAsync(async (req, res) => {
-  const patient = await Patient.find();
+  const patients = await Patient.find()
+    .populate({ path: "hospital", select: "name" })
+    .populate({ path: "patient", select: "name" })
+    .populate({ path: "attendingDoctor", select: "name" });
+  
   res.status(200).json({
     status: "success",
-    data: { patient },
+    data: { patients: patients },
   });
 });
 exports.getAllAppointments = catchAsync(async (req, res) => {
-  const appointment = await Appointment.find();
+  const appointment = await Appointment.find()
+    .populate({ path: "user", select: "name email" })
+    .populate({ path: "hospital", select: "name address" })
+    .populate({
+      path: "doctor",
+      select: "name category",
+      populate: { path: "category", select: "name" },
+    });
   res.status(200).json({
     status: "success",
     data: { appointment },
   });
 });
-
 exports.getAllMedicines = catchAsync(async (req, res) => {
-  const allMedicine = await Medicine.find();
+  const allMedicine = await Medicine.find().populate({
+    path: "pharmacyId",
+    select: "name",
+  });
+  
   res.status(200).json({
     status: "success",
     data: { allMedicine },
   });
 });
 exports.getAllbadInventries = catchAsync(async (req, res) => {
-  const badInventries = await BadInventries.find();
+  const badInventries = await BadInventries.find().populate({
+    path: "hospital",
+    select: "name",
+  });
+
   res.status(200).json({
     status: "success",
     data: { badInventries },
   });
 });
+exports.getAllBloodBank = catchAsync(async (req, res) => {
+  const allBloodBank = await BloodBank.find();
+  res.status(200).json({
+    status: "success",
+    data: { allBloodBank },
+  });
+});
 exports.getAllbloodInventries = catchAsync(async (req, res) => {
-  const bloodInventries = await BloodInventries.find();
+  const bloodInventries = await BloodInventries.find().populate({
+    path: "bloodBankId",
+    select: "name",
+  });
   res.status(200).json({
     status: "success",
     data: { bloodInventries },
   });
 });
 exports.getAllPathologyInventries = catchAsync(async (req, res) => {
-  const pathologyInventries = await PathologyInventries.find();
+  const pathologyInventries = await PathologyInventries.find().populate({
+    path: "lab",
+    select: "name",
+  });
   res.status(200).json({
     status: "success",
     data: { pathologyInventries },
@@ -161,7 +196,6 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     data: { user },
   });
 });
-
 exports.createUserPackage = catchAsync(async (req, res) => {
   const package = await Package.create({
     ...req.body,
@@ -172,7 +206,6 @@ exports.createUserPackage = catchAsync(async (req, res) => {
     data: { package },
   });
 });
-
 exports.addCategory = catchAsync(async (req, res) => {
   try {
     const { name } = req.body;
@@ -198,7 +231,6 @@ exports.addCategory = catchAsync(async (req, res) => {
     });
   }
 });
-
 exports.addMedicineCategory = catchAsync(async (req, res) => {
   try {
     const { name } = req.body;
@@ -224,21 +256,52 @@ exports.addMedicineCategory = catchAsync(async (req, res) => {
     });
   }
 });
+exports.addlabCategory = catchAsync(async (req, res) => {
+  try {
+    const { name } = req.body;
+    const existingCategory = await LabCategory.findOne({ name });
+    if (existingCategory) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Category already exists" });
+    }
+    const category = new LabCategory({ name });
+    await category.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Lab Category added successfully",
+      category,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error adding category",
+      error: error.message,
+    });
+  }
+});
 exports.getAllDoctorCategory = catchAsync(async (req, res) => {
   const doctorCategories = await doctorCategory.find();
   res.status(200).json({
-    status: 'success',
-    message: 'All doctor categories retrieved successfully.',
+    status: "success",
+    message: "All doctor categories retrieved successfully.",
     data: doctorCategories,
   });
 });
-
-// Get all Medicine Categories
 exports.getAllMedicineCategory = catchAsync(async (req, res) => {
   const medicineCategories = await medicineCategory.find();
   res.status(200).json({
-    status: 'success',
-    message: 'All medicine categories retrieved successfully.',
+    status: "success",
+    message: "All medicine categories retrieved successfully.",
     data: medicineCategories,
+  });
+});
+exports.getlabCategory = catchAsync(async (req, res) => {
+  const labCategory = await LabCategory.find();
+  res.status(200).json({
+    status: "success",
+    message: "All medicine categories retrieved successfully.",
+    data: labCategory,
   });
 });

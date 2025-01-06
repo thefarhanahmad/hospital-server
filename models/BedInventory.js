@@ -4,22 +4,20 @@ const bedInventorySchema = new mongoose.Schema(
   {
     hospital: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Hospital",
       required: true,
     },
     ward: {
       type: String,
-      // required: true,
       enum: ["general", "private", "semi-private", "icu", "nicu", "emergency"],
     },
     totalBeds: {
       type: Number,
-      // required: true,
+   
       min: 0,
     },
     occupiedBeds: {
       type: Number,
-      // required: true,
       min: 0,
       validate: {
         validator: function (value) {

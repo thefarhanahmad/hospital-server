@@ -44,6 +44,10 @@ router.post(
 );
 router.get("/test-results", userOrderController.getTestResults);
 router.post("/contact", userController.contact);
+router.post("/cart", userController.addToCart);
+router.delete("/cart/:id", userController.deleteToCart);
+router.patch("/cart/:id", userController.updateToCart);
+router.get("/all-carts", userController.getAllCart);
 
 // User profile routes
 module.exports = router;

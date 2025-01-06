@@ -2,6 +2,40 @@ const BloodInventory = require("../models/BloodInventory");
 const BloodRequest = require("../models/BloodRequest");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const BloodBank = require("../models/BloodBank");
+// create blood bank
+
+exports.createBloodBank = catchAsync(async (req, res) => {
+  const {
+    name,
+    licenseNumber,
+    contactInfo,
+    address,
+    inventory,
+    services,
+    operatingHours,
+    is24x7,
+  } = req.body;
+
+  const bloodBank = await BloodBank.create({
+    userId: req.user._id,
+    name,
+    licenseNumber,
+    contactInfo,
+    address,
+    inventory,
+    services,
+    operatingHours,
+    is24x7,
+  });
+
+  res.status(201).json({
+    status: "success",
+    data: {
+      bloodBank,
+    },
+  });
+});
 
 // Inventory Management
 exports.updateInventory = catchAsync(async (req, res) => {
@@ -65,7 +99,6 @@ exports.getAvailability = catchAsync(async (req, res) => {
 // Billing
 exports.generateBill = catchAsync(async (req, res, next) => {
   const request = await BloodRequest.findById(req.params.requestId);
-
 
   if (request.status !== "approved") {
     return next(
@@ -147,7 +180,6 @@ exports.getBloodRequests = catchAsync(async (req, res) => {
 });
 
 exports.updateRequestStatus = catchAsync(async (req, res, next) => {
-
   const request = await BloodRequest.findOneAndUpdate(
     {
       _id: req.params.requestId,
@@ -162,12 +194,11 @@ exports.updateRequestStatus = catchAsync(async (req, res, next) => {
       runValidators: true,
     }
   );
-  console.log(request)
+  console.log(request);
 
   if (!request) {
     return next(new AppError("Blood request not found", 404));
   }
-
 
   // Update inventory if request is approved
   if (req.body.status === "approved") {
@@ -183,7 +214,7 @@ exports.updateRequestStatus = catchAsync(async (req, res, next) => {
         $inc: { quantity: -request.quantity },
       }
     );
-    console.log(inventory)
+    console.log(inventory);
 
     if (!inventory) {
       return next(new AppError("Insufficient inventory", 400));

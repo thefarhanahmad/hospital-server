@@ -51,14 +51,12 @@ const userSchema = new mongoose.Schema(
         message: "Please provide a valid phone number",
       },
     },
-    address: {
-      type: String,
-      street: String,
-      city: String,
-      state: String,
-      zipCode: String,
-      country: String,
-    },
+    address: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Address",
+      },
+    ],
     dateOfBirth: {
       type: Date,
       required: [true, "Date of birth is required"],

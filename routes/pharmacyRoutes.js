@@ -9,6 +9,8 @@ const {
 
 const router = express.Router();
 // Protected routes
+
+
 router.use(protect);
 router.use(restrictTo("pharmacy"));
 

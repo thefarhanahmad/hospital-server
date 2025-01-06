@@ -10,7 +10,7 @@ const medicineCategory = require("../models/medicineCategory");
 exports.createPharmacy = async (req, res) => {
   try {
     // Merge all fields from req and include pharmacyId from req.user
-    const pharmacyData = { ...req.body, pharmacyId: req.user._id };
+    const pharmacyData = { ...req.body, userId: req.user._id };
 
     const pharmacy = await Pharmacy.create(pharmacyData);
     res.status(201).json({

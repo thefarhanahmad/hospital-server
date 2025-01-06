@@ -4,7 +4,7 @@ const bloodInventorySchema = new mongoose.Schema(
   {
     bloodBankId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "BloodBank",
       required: true,
     },
     bloodType: {

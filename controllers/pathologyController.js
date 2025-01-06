@@ -5,7 +5,6 @@ const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const Equipment = require("../models/Equipment");
 const PathologyLab = require("../models/PathologyLab");
-// Test Management
 
 exports.createPathologyLab = catchAsync(async (req, res) => {
   try {
@@ -55,7 +54,6 @@ exports.addTest = catchAsync(async (req, res) => {
     data: { test },
   });
 });
-
 exports.getTests = catchAsync(async (req, res) => {
   const tests = await PathologyTest.find({
     lab: req.user._id,
@@ -68,8 +66,6 @@ exports.getTests = catchAsync(async (req, res) => {
     data: { tests },
   });
 });
-
-// Report Generation
 exports.generateReport = catchAsync(async (req, res, next) => {
   const { test, patient, results } = req.body;
 
@@ -101,7 +97,6 @@ exports.generateReport = catchAsync(async (req, res, next) => {
     data: { report },
   });
 });
-
 exports.getReports = catchAsync(async (req, res) => {
   const reports = await PathologyReport.find({ lab: req.user._id })
     .populate("patient", "name email")
@@ -114,8 +109,6 @@ exports.getReports = catchAsync(async (req, res) => {
     data: { reports },
   });
 });
-
-//Inventory Create
 exports.createInventory = async (req, res) => {
   try {
     const {
@@ -153,7 +146,6 @@ exports.createInventory = async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
-// Inventory Management
 exports.getInventory = catchAsync(async (req, res) => {
   const inventory = await PathologyInventory.find({
     lab: req.user._id,
@@ -177,7 +169,6 @@ exports.getInventory = catchAsync(async (req, res) => {
     data: { inventory: updatedInventory },
   });
 });
-
 exports.createEquipment = async (req, res) => {
   try {
     const { name, model, description } = req.body;
@@ -187,7 +178,7 @@ exports.createEquipment = async (req, res) => {
     }
 
     const equipment = new Equipment({
-      userId: req.user._id,
+      labId: req.user._id,
       name,
       model,
       description,
@@ -202,7 +193,6 @@ exports.createEquipment = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 exports.getAllEquipment = async (req, res) => {
   try {
     const equipment = await Equipment.find();

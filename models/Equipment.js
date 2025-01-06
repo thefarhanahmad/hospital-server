@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 const equipmentSchema = new mongoose.Schema(
   {
-    userId: {
+    labId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "PathologyLab",
     },
     name: {
       type: String,

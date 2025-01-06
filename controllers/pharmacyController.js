@@ -131,7 +131,9 @@ exports.createInventory = async (req, res) => {
 };
 
 exports.getInventory = catchAsync(async (req, res) => {
-  const inventory = await PharmacyInventory.find({ pharmacyId: req.user._id })
+  const inventory = await PharmacyInventory.find({
+    pharmacyId: req.Pharmacy._id,
+  })
     .populate("medicineId")
     .sort("medicine.name");
 

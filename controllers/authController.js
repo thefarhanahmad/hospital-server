@@ -72,7 +72,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Please provide email and password", 400));
   }
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email }).select("-password");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Incorrect email or password", 401));
@@ -83,13 +83,9 @@ exports.login = catchAsync(async (req, res, next) => {
 
 exports.getAddresses = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate("address");
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-    res.status(200).json({ success: true, data: user.address });
+    const result = await Address.find({userId:req.user._id})
+   
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     res
       .status(500)
@@ -98,21 +94,12 @@ exports.getAddresses = async (req, res) => {
 };
 exports.addAddress = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
     // Create a new address
     const newAddress = await Address.create({
       userId: req.user._id,
       ...req.body,
     });
-
-    user.address.push(newAddress._id);
-    await user.save();
+    await newAddress.save();
     res.status(201).json({ success: true, data: newAddress });
   } catch (error) {
     res.status(500).json({
@@ -126,22 +113,9 @@ exports.addAddress = async (req, res) => {
 exports.deleteAddress = async (req, res) => {
   try {
     const { address_id } = req.params;
-    const user = await User.findById(req.user._id);
 
-    console.log("userId", user);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
-    user.address = user.address.filter(
-      (address) => address._id.toString() !== address_id
-    );
-    await user.save();
-    await Address.findByIdAndDelete(address_id);
-
-    console.log(user.address);
+     await Address.findByIdAndDelete(address_id) 
+   
     res
       .status(200)
       .json({ success: true, message: "Address deleted successfully" });

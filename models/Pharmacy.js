@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const pharmacySchema = new mongoose.Schema({
-  userId: {
+  pharmacyId: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },

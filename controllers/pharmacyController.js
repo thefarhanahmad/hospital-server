@@ -10,7 +10,7 @@ const medicineCategory = require("../models/medicineCategory");
 exports.createPharmacy = async (req, res) => {
   try {
     // Merge all fields from req and include pharmacyId from req.user
-    const pharmacyData = { ...req.body, userId: req.user._id };
+    const pharmacyData = { ...req.body, pharmacyId: req.user._id };
 
     const pharmacy = await Pharmacy.create(pharmacyData);
     res.status(201).json({
@@ -94,7 +94,7 @@ exports.getMedicine = catchAsync(async (req, res) => {
 exports.createInventory = async (req, res) => {
   try {
     const {
-      pharmacyId,
+      branch,
       medicineId,
       batchNumber,
       quantity,
@@ -105,7 +105,7 @@ exports.createInventory = async (req, res) => {
       location,
     } = req.body;
     const newInventory = new PharmacyInventory({
-      pharmacyId,
+      branch,
       medicineId,
       batchNumber,
       quantity,
@@ -114,6 +114,7 @@ exports.createInventory = async (req, res) => {
       sellingPrice,
       reorderLevel,
       location,
+      pharmacyId: req.user._id,
     });
     await newInventory.save();
     res.status(201).json({
@@ -131,9 +132,8 @@ exports.createInventory = async (req, res) => {
 };
 
 exports.getInventory = catchAsync(async (req, res) => {
-  const inventory = await PharmacyInventory.find({
-    pharmacyId: req.Pharmacy._id,
-  })
+  const {branchId} = req.query;
+  const inventory = await PharmacyInventory.find({ branch: branchId })
     .populate("medicineId")
     .sort("medicine.name");
 

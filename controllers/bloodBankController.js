@@ -96,6 +96,16 @@ exports.getAvailability = catchAsync(async (req, res) => {
   });
 });
 
+
+// exports.getBills = catchAsync(async (req, res, next) => {
+//   const getallbills = await BloodRequest.find({ bloodBankId: req.user._id });
+//   res.status(200).json({
+//     status: "success",
+//     data: { getallbills },
+//   });
+// });
+
+
 // Billing
 exports.generateBill = catchAsync(async (req, res, next) => {
   const request = await BloodRequest.findById(req.params.requestId);

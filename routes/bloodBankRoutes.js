@@ -10,6 +10,7 @@ const {
 const router = express.Router();
 // Billing
 router.post("/billing/:requestId", bloodBankController.generateBill);
+// router.get("/billing/:requestId", bloodBankController.getBills);
 // Protected routes
 router.use(protect);
 router.use(restrictTo("bloodbank"));

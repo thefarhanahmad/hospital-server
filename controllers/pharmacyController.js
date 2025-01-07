@@ -132,7 +132,7 @@ exports.createInventory = async (req, res) => {
 };
 
 exports.getInventory = catchAsync(async (req, res) => {
-  const {branchId} = req.query;
+  const { branchId } = req.query;
   const inventory = await PharmacyInventory.find({ branch: branchId })
     .populate("medicineId")
     .sort("medicine.name");
@@ -152,11 +152,20 @@ exports.getInventory = catchAsync(async (req, res) => {
 
 exports.updateInventory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-
-  const inventory = await PharmacyInventory.findByIdAndUpdate(id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const { quantity, purchasePrice, sellingPrice, reorderLevel } = req.body;
+  const inventory = await PharmacyInventory.findByIdAndUpdate(
+    id,
+    {
+      quantity,
+      purchasePrice,
+      sellingPrice,
+      reorderLevel,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
   if (!inventory) {
     return res.status(404).json({
@@ -253,5 +262,13 @@ exports.getBills = catchAsync(async (req, res) => {
     status: "success",
     results: bills.length,
     data: { bills },
+  });
+});
+
+exports.getAllPharmacy = catchAsync(async (req, res) => {
+  const pharmacy = await Pharmacy.find({ pharmacyId: req.user._id });
+  res.status(200).json({
+    status: "success",
+    data: { pharmacy },
   });
 });

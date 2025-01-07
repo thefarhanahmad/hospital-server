@@ -13,8 +13,11 @@ const router = express.Router();
 router.use(protect);
 router.use(restrictTo("pharmacy"));
 router.post("/create-pharmacy", pharmacyController.createPharmacy);
+router.get("/all-pharmacy", pharmacyController.getAllPharmacy);
 router.post("/create-medicine", pharmacyController.createMedicine);
 router.get("/all-medicine", pharmacyController.getMedicine);
+
+
 router.post(
   "/inventory",
   // validateRequest(inventoryUpdateRules),

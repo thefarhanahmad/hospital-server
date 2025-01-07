@@ -14,14 +14,14 @@ exports.createDiagnostic = catchAsync(async (req, res) => {
     address,
     services,
     equipment,
-    accreditations
+    accreditations,
   } = req.body;
 
   // Validate incoming data (optional additional validation can be added)
   if (!name || !licenseNumber || !contactInfo || !address) {
     return res.status(400).json({
-      status: 'fail',
-      message: 'Required fields are missing'
+      status: "fail",
+      message: "Required fields are missing",
     });
   }
 
@@ -33,15 +33,15 @@ exports.createDiagnostic = catchAsync(async (req, res) => {
     address,
     services,
     equipment,
-    accreditations
+    accreditations,
   });
 
   // Send response
   res.status(201).json({
-    status: 'success',
+    status: "success",
     data: {
-      diagnosticCenter
-    }
+      diagnosticCenter,
+    },
   });
 });
 

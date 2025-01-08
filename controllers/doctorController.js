@@ -12,6 +12,9 @@ const fs = require("fs");
 const doctorCategory = require("../models/doctorCategory");
 
 exports.registerDoctor = catchAsync(async (req, res) => {
+  console.log("doctor req body:", req.body);
+  console.log("doctor req files:", req.files);
+
   const {
     name,
     registrationNumber,
@@ -22,111 +25,104 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     clinicLocation,
     latitude,
     longitude,
-    status,
     email,
     category,
+    status,
   } = req.body;
 
-  const existingDoctor = await Doctor.findOne({ "contactInfo.email": email });
-  if (existingDoctor) {
-    return res.status(400).json({
-      status: "error",
-      message: "User already exists with this email.",
-    });
-  }
-
-  // Function to upload a single file to Cloudinary with retries
-  const uploadToCloudinary = async (file, retries = 3) => {
-    if (!file) return null;
-    for (let i = 0; i < retries; i++) {
-      try {
-        const result = await cloudinary.uploader.upload(file.path, {
-          folder: "doctor_documents",
-        });
-        fs.unlinkSync(file.path); // Delete local file
-        return result.secure_url;
-      } catch (error) {
-        console.error(`Cloudinary upload failed (attempt ${i + 1}):`, error);
-        if (i === retries - 1)
-          throw new Error("Failed to upload file to Cloudinary");
-      }
-    }
-  };
-
-  // Function to upload multiple files to Cloudinary
-  const uploadMultipleToCloudinary = async (files) => {
-    if (!files || files.length === 0) return [];
-    const uploadPromises = files.map((file) => uploadToCloudinary(file));
-    return Promise.all(uploadPromises);
-  };
-
   try {
+    // Check if the doctor already exists
+    const existingDoctor = await Doctor.findOne({ "contactInfo.email": email });
+    if (existingDoctor) {
+      return res.status(400).json({
+        status: "error",
+        message: "A doctor is already registered with this email.",
+      });
+    }
+
+    // Extract uploaded files
+    const {
+      tenthMarksheet,
+      twelfthMarksheet,
+      degreeCertificate,
+      firstYearMarksheet,
+      secondYearMarksheet,
+      thirdYearMarksheet,
+      fourthYearMarksheet,
+      fifthYearMarksheet,
+      mciRegistration,
+      photograph,
+      clinicPhotographs,
+    } = req.files || {};
+
+    // Prepare uploaded documents
     const uploadedDocuments = {
       educationalQualifications: {
-        tenthMarksheet: await uploadToCloudinary(req.files.tenthMarksheet?.[0]),
-        twelfthMarksheet: await uploadToCloudinary(
-          req.files.twelfthMarksheet?.[0]
-        ),
+        tenthMarksheet: tenthMarksheet?.[0]?.path || null,
+        twelfthMarksheet: twelfthMarksheet?.[0]?.path || null,
       },
       medicalDegreeDocuments: {
-        degreeCertificate: await uploadToCloudinary(
-          req.files.degreeCertificate?.[0]
-        ),
-        academicYearMarksheets: await Promise.all(
-          [
-            { year: "1st Year", file: req.files.firstYearMarksheet?.[0] },
-            { year: "2nd Year", file: req.files.secondYearMarksheet?.[0] },
-            { year: "3rd Year", file: req.files.thirdYearMarksheet?.[0] },
-            { year: "4th Year", file: req.files.fourthYearMarksheet?.[0] },
-            { year: "5th Year", file: req.files.fifthYearMarksheet?.[0] },
-          ]
-            .map(async (marksheet) =>
-              marksheet.file
-                ? {
-                    year: marksheet.year,
-                    filePath: await uploadToCloudinary(marksheet.file),
-                  }
-                : null
-            )
-            .filter((marksheet) => marksheet !== null)
-        ),
+        degreeCertificate: degreeCertificate?.[0]?.path || null,
+        academicYearMarksheets: [
+          {
+            year: "First Year",
+            filePath: firstYearMarksheet?.[0]?.path || null,
+          },
+          {
+            year: "Second Year",
+            filePath: secondYearMarksheet?.[0]?.path || null,
+          },
+          {
+            year: "Third Year",
+            filePath: thirdYearMarksheet?.[0]?.path || null,
+          },
+          {
+            year: "Fourth Year",
+            filePath: fourthYearMarksheet?.[0]?.path || null,
+          },
+          {
+            year: "Fifth Year",
+            filePath: fifthYearMarksheet?.[0]?.path || null,
+          },
+        ].filter((marksheet) => marksheet.filePath), // Remove empty entries
       },
-      photograph: await uploadToCloudinary(req.files.doctorPhotograph?.[0]),
-      mciRegistration: await uploadToCloudinary(req.files.mciRegistration?.[0]),
+      photograph: req.files.photograph?.[0].path || null,
+      mciRegistration: mciRegistration?.map((file) => file.path) || [],
     };
 
-    // Upload clinic photographs
-    const clinicPhotos = await uploadMultipleToCloudinary(
-      req.files.clinicPhotographs
-    );
-    const populatedDoctor = await doctorCategory
-      .findById(_id)
-      .populate("category", "name");
-    // Create doctor record in the database
-    const doctor = await Doctor.create({
-      userId:req.user._id,
+    // Map clinic photos
+    const clinicPhotos = clinicPhotographs?.map((file) => file.path) || [];
+
+    // Create a new doctor object
+    const doctorData = {
+      userId: req.user?._id || null, // Use authenticated user's ID, if available
       name,
       category,
       registrationNumber,
-      category: req.Category._id,
       clinicName,
       degree,
       aadharCardNumber,
-      contactInfo: { phone: mobileNumber, email },
+      contactInfo: {
+        phone: mobileNumber,
+        email,
+      },
       clinics: [
         {
           clinicName,
           location: {
             address: clinicLocation,
-            latitude,
-            longitude,
+            latitude: parseFloat(latitude) || null,
+            longitude: parseFloat(longitude) || null,
           },
           clinicPhotos,
         },
       ],
       documents: uploadedDocuments,
-      status,
-    });
+      status: status || "pending", // Default status
+    };
+
+    // Save doctor to the database
+    const doctor = await Doctor.create(doctorData);
 
     res.status(201).json({
       status: "success",

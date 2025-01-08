@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const diagnosticTestSchema = new mongoose.Schema({
   center: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Diagnostic',
+    ref: 'User',
     required: true
   },
   name: {

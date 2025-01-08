@@ -12,7 +12,7 @@ const router = express.Router();
 // Protected routes
 router.use(protect);
 router.use(restrictTo('pathlab'));
-
+router.post("/create-pathology",   pathologyController.createPathologyLab)
 // Test Management
 router.post('/test', validateRequest(testValidation), pathologyController.addTest);
 router.get('/tests', pathologyController.getTests);
@@ -22,6 +22,9 @@ router.post('/report', validateRequest(reportValidation), pathologyController.ge
 router.get('/reports', pathologyController.getReports);
 
 // Inventory Management
+router.post('/inventory', pathologyController.createInventory);
 router.get('/inventory', pathologyController.getInventory);
+router.post("/create-equipment",   pathologyController.createEquipment)
+router.get("/all-equipment", pathologyController.getAllEquipment)
 
 module.exports = router;

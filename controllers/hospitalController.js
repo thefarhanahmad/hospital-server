@@ -6,7 +6,7 @@ const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
-
+const fs = require("fs");
 exports.registerHospital = async (req, res) => {
   // console.log("register hospital req body : ", req.body);
   if (req.body && req.body.data) {
@@ -24,7 +24,6 @@ exports.registerHospital = async (req, res) => {
       ownershipInformation,
       registrationBasis,
       chargesOverview,
-
       doctorAvailability,
     } = req.body;
 
@@ -36,25 +35,17 @@ exports.registerHospital = async (req, res) => {
         message: "Provided email is not associated with any user.",
       });
     }
-
-    const hospitalImages = req.files?.hospitalImages
-      ? await Promise.all(
-          req.files.hospitalImages.map(async (file) => {
-            const result = await cloudinary.uploader.upload(file.path, {
-              folder: "hospital_images",
-            });
-            return result.secure_url;
-          })
-        )
-      : [];
+    const dataImage = req.files.hospitalImages.map((ele, i) => {
+      return ele.path;
+    });
 
     const hospital = await Hospital.create({
-      registrationNumber: registrationNumber,
-      type: type,
+      registrationNumber,
+      type,
       email,
-      name: name,
-      cmoNumber: cmoNumber,
-      hospitalImages: hospitalImages,
+      name,
+      cmoNumber,
+      hospitalImages: dataImage,
       insuranceServices: {
         ...insuranceServices,
         ayushmanBharat: {
@@ -88,14 +79,13 @@ exports.registerHospital = async (req, res) => {
       data: { hospital },
     });
   } catch (error) {
-    console.error("Error in registerHospital:", error.message);
+    console.error("Error in registerHospital:", error);
     res.status(500).json({
       status: "error",
       message: error.message || "Something went wrong.",
     });
   }
 };
-
 exports.verifyHospital = catchAsync(async (req, res, next) => {
   const verification = await HospitalVerification.findOne({
     hospital: req.params.id,

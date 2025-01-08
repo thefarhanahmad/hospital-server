@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const pharmacySchema = new mongoose.Schema({
+  pharmacyId: {
+    type: mongoose.Schema.ObjectId,
+    ref: "User",
+  },
   name: {
     type: String,
     required: [true, 'Pharmacy name is required'],
@@ -46,14 +50,14 @@ const pharmacySchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  inventory: [{
-    medicine: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Medicine'
-    },
-    quantity: Number,
-    price: Number
-  }]
+  // inventory: [{
+  //   medicine: {
+  //     type: mongoose.Schema.Types.ObjectId,
+  //     ref: 'Medicine'
+  //   },
+  //   quantity: Number,
+  //   price: Number
+  // }]
 }, {
   timestamps: true
 });

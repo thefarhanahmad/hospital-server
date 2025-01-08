@@ -5,9 +5,12 @@ const Prescription = require("../models/Prescription");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const cloudinary = require("../config/cloudinary");
+const Category = require("../models/doctorCategory");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const fs = require("fs");
+const doctorCategory = require("../models/doctorCategory");
+
 exports.registerDoctor = catchAsync(async (req, res) => {
   const {
     name,
@@ -21,6 +24,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     longitude,
     status,
     email,
+    category,
   } = req.body;
 
   const existingDoctor = await Doctor.findOne({ "contactInfo.email": email });
@@ -57,7 +61,6 @@ exports.registerDoctor = catchAsync(async (req, res) => {
   };
 
   try {
-    // Upload documents to Cloudinary
     const uploadedDocuments = {
       educationalQualifications: {
         tenthMarksheet: await uploadToCloudinary(req.files.tenthMarksheet?.[0]),
@@ -96,11 +99,16 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     const clinicPhotos = await uploadMultipleToCloudinary(
       req.files.clinicPhotographs
     );
-
+    const populatedDoctor = await doctorCategory
+      .findById(_id)
+      .populate("category", "name");
     // Create doctor record in the database
     const doctor = await Doctor.create({
+      userId:req.user._id,
       name,
+      category,
       registrationNumber,
+      category: req.Category._id,
       clinicName,
       degree,
       aadharCardNumber,

@@ -8,19 +8,22 @@ const {
 } = require("../validations/bloodBankValidation");
 
 const router = express.Router();
-
+// Billing
+router.post("/billing/:requestId", bloodBankController.generateBill);
+// router.get("/billing/:requestId", bloodBankController.getBills);
 // Protected routes
 router.use(protect);
 router.use(restrictTo("bloodbank"));
+router.post("/create-blood-bank", bloodBankController.createBloodBank);
 
 // Inventory Management
+
 router.post(
   "/inventory",
   validateRequest(inventoryValidation),
   bloodBankController.updateInventory
 );
 router.get("/availability", bloodBankController.getAvailability);
-
 // Blood Request Management
 router.post("/requests", bloodBankController.createBloodRequest);
 router.get("/requests", bloodBankController.getBloodRequests);
@@ -30,7 +33,6 @@ router.patch(
   bloodBankController.updateRequestStatus
 );
 
-// Billing
-router.post("/billing/:requestId", bloodBankController.generateBill);
+// Admin only routes
 
 module.exports = router;

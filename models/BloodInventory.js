@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const bloodInventorySchema = new mongoose.Schema(
   {
-    bloodBank: {
+    bloodBankId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BloodBank",
       required: true,

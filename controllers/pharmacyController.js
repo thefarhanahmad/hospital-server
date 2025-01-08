@@ -4,10 +4,137 @@ const PharmacyBill = require("../models/PharmacyBill");
 const Medicine = require("../models/Medicine");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const medicineCategory = require("../models/medicineCategory");
+
+// Create a Pharmacy
+exports.createPharmacy = async (req, res) => {
+  try {
+    // Merge all fields from req and include pharmacyId from req.user
+    const pharmacyData = { ...req.body, pharmacyId: req.user._id };
+
+    const pharmacy = await Pharmacy.create(pharmacyData);
+    res.status(201).json({
+      success: true,
+      data: pharmacy,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+exports.createMedicine = async (req, res) => {
+  try {
+    const {
+      name,
+      genericName,
+      manufacturer,
+      category,
+      prescriptionRequired,
+      composition,
+      dosageForm,
+      strength,
+      packaging,
+      mrp,
+      mainCategory,
+    } = req.body;
+
+    const newMedicine = new Medicine({
+      name,
+      genericName,
+      manufacturer,
+      category,
+      prescriptionRequired,
+      composition,
+      dosageForm,
+      strength,
+      packaging,
+      mrp,
+      pharmacyId: req.user._id,
+      mainCategory,
+    });
+
+    // Save the medicine to the database
+    const savedMedicine = await newMedicine.save();
+
+    // Respond with the saved medicine data
+    res.status(201).json({
+      success: true,
+      message: "Medicine created successfully",
+      data: savedMedicine,
+    });
+  } catch (error) {
+    // Handle validation and server errors
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors,
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+// get medicine
+exports.getMedicine = catchAsync(async (req, res) => {
+  const medicine = await Medicine.find({ pharmacyId: req.user._id });
+  res.status(200).json({
+    status: "success",
+    data: { medicine: medicine },
+  });
+});
+
+exports.createInventory = async (req, res) => {
+  try {
+    const {
+      branch,
+      medicineId,
+      batchNumber,
+      quantity,
+      expiryDate,
+      purchasePrice,
+      sellingPrice,
+      reorderLevel,
+      location,
+    } = req.body;
+    const newInventory = new PharmacyInventory({
+      branch,
+      medicineId,
+      batchNumber,
+      quantity,
+      expiryDate,
+      purchasePrice,
+      sellingPrice,
+      reorderLevel,
+      location,
+      pharmacyId: req.user._id,
+    });
+    await newInventory.save();
+    res.status(201).json({
+      message: "Inventory created successfully!",
+      data: newInventory,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error(error);
+    res.status(500).json({
+      message: "Error creating inventory.",
+      error: error.message,
+    });
+  }
+};
 
 exports.getInventory = catchAsync(async (req, res) => {
-  const inventory = await PharmacyInventory.find({ pharmacy: req.user._id })
-    .populate("medicine")
+  const { branchId } = req.query;
+  const inventory = await PharmacyInventory.find({ branch: branchId })
+    .populate("medicineId")
     .sort("medicine.name");
 
   // Add low stock warning
@@ -24,41 +151,28 @@ exports.getInventory = catchAsync(async (req, res) => {
 });
 
 exports.updateInventory = catchAsync(async (req, res, next) => {
-  const {
-    medicineId,
-    batchNumber,
-    quantity,
-    expiryDate,
-    purchasePrice,
-    sellingPrice,
-  } = req.body;
-
-  // Validate medicine exists
-  const medicine = await Medicine.findById(medicineId);
-  if (!medicine) {
-    return next(new AppError("Medicine not found", 404));
-  }
-
-  // Update or create inventory entry
-  const inventory = await PharmacyInventory.findOneAndUpdate(
-    {
-      pharmacy: req.user._id,
-      medicine: medicineId,
-      batchNumber,
-    },
+  const { id } = req.params;
+  const { quantity, purchasePrice, sellingPrice, reorderLevel } = req.body;
+  const inventory = await PharmacyInventory.findByIdAndUpdate(
+    id,
     {
       quantity,
-      expiryDate,
       purchasePrice,
       sellingPrice,
-      ...req.body,
+      reorderLevel,
     },
     {
       new: true,
-      upsert: true,
       runValidators: true,
     }
   );
+
+  if (!inventory) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Inventory item not found",
+    });
+  }
 
   res.status(200).json({
     status: "success",
@@ -76,7 +190,7 @@ exports.createBill = catchAsync(async (req, res, next) => {
   for (const item of items) {
     const inventory = await PharmacyInventory.findOne({
       _id: item.inventory,
-      pharmacy: req.user._id,
+      pharmacyId: req.user._id,
     });
 
     if (!inventory) {
@@ -140,7 +254,7 @@ exports.getBills = catchAsync(async (req, res) => {
     .populate("prescription")
     .populate({
       path: "items.inventory",
-      populate: { path: "medicine" },
+      populate: { path: "medicineId" },
     })
     .sort("-createdAt");
 
@@ -148,5 +262,13 @@ exports.getBills = catchAsync(async (req, res) => {
     status: "success",
     results: bills.length,
     data: { bills },
+  });
+});
+
+exports.getAllPharmacy = catchAsync(async (req, res) => {
+  const pharmacy = await Pharmacy.find({ pharmacyId: req.user._id });
+  res.status(200).json({
+    status: "success",
+    data: { pharmacy },
   });
 });

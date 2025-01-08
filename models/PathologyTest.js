@@ -5,8 +5,8 @@ const pathologyTestSchema = new mongoose.Schema(
   {
     lab: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PathologyLab", // Reference to the PathologyLab collection
-      required: [true, "Lab is required"],
+      ref: "User",
+      required: [true, "LabId is required"],
     },
     name: {
       type: String,
@@ -14,15 +14,9 @@ const pathologyTestSchema = new mongoose.Schema(
       trim: true,
     },
     category: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "LabCategory",
       required: true,
-      enum: [
-        "hematology",
-        "biochemistry",
-        "microbiology",
-        "immunology",
-        "other",
-      ],
     },
     description: {
       type: String,

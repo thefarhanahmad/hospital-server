@@ -3,8 +3,44 @@ const PathologyReport = require("../models/PathologyReport");
 const PathologyInventory = require("../models/PathologyInventory");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const Equipment = require("../models/Equipment");
+const PathologyLab = require("../models/PathologyLab");
 
-// Test Management
+exports.createPathologyLab = catchAsync(async (req, res) => {
+  try {
+    const {
+      name,
+      licenseNumber,
+      contactInfo,
+      address,
+      tests,
+      certifications,
+      sampleCollection,
+    } = req.body;
+    const newPathologyLab = new PathologyLab({
+      userId: req.user._id,
+      name,
+      licenseNumber,
+      contactInfo,
+      address,
+      tests,
+      certifications,
+      sampleCollection,
+    });
+    await newPathologyLab.save();
+
+    return res.status(201).json({
+      message: "Pathology lab created successfully",
+      data: newPathologyLab,
+    });
+  } catch (error) {
+    console.error("Error creating pathology lab:", error);
+    return res.status(500).json({
+      message: "Failed to create pathology lab",
+      error: error.message,
+    });
+  }
+});
 exports.addTest = catchAsync(async (req, res) => {
   console.log("req user pathlab : ", req.user);
 
@@ -18,7 +54,6 @@ exports.addTest = catchAsync(async (req, res) => {
     data: { test },
   });
 });
-
 exports.getTests = catchAsync(async (req, res) => {
   const tests = await PathologyTest.find({
     lab: req.user._id,
@@ -31,8 +66,6 @@ exports.getTests = catchAsync(async (req, res) => {
     data: { tests },
   });
 });
-
-// Report Generation
 exports.generateReport = catchAsync(async (req, res, next) => {
   const { test, patient, results } = req.body;
 
@@ -64,7 +97,6 @@ exports.generateReport = catchAsync(async (req, res, next) => {
     data: { report },
   });
 });
-
 exports.getReports = catchAsync(async (req, res) => {
   const reports = await PathologyReport.find({ lab: req.user._id })
     .populate("patient", "name email")
@@ -77,8 +109,43 @@ exports.getReports = catchAsync(async (req, res) => {
     data: { reports },
   });
 });
+exports.createInventory = async (req, res) => {
+  try {
+    const {
+      lab,
+      item,
+      batchNumber,
+      quantity,
+      reorderLevel,
+      expiryDate,
+      location,
+      status,
+    } = req.body;
 
-// Inventory Management
+    // Create a new inventory item
+    const newInventory = new PathologyInventory({
+      lab: req.user._id,
+      item,
+      batchNumber,
+      quantity,
+      reorderLevel,
+      expiryDate,
+      location,
+      status,
+    });
+
+    // Save to the database
+    await newInventory.save();
+
+    res.status(201).json({
+      message: "Inventory item created successfully.",
+      inventory: newInventory,
+    });
+  } catch (error) {
+    console.error("Error creating inventory item:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
 exports.getInventory = catchAsync(async (req, res) => {
   const inventory = await PathologyInventory.find({
     lab: req.user._id,
@@ -102,3 +169,40 @@ exports.getInventory = catchAsync(async (req, res) => {
     data: { inventory: updatedInventory },
   });
 });
+exports.createEquipment = async (req, res) => {
+  try {
+    const { name, model, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: "Equipment name is required" });
+    }
+
+    const equipment = new Equipment({
+      labId: req.user._id,
+      name,
+      model,
+      description,
+    });
+
+    await equipment.save();
+    res.status(201).json({
+      message: "Equipment created successfully",
+      equipment,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+exports.getAllEquipment = async (req, res) => {
+  try {
+    const equipment = await Equipment.find();
+    res.status(200).json({
+      userId: req.user._id,
+      status: true,
+      message: "all Equipment get successfully",
+      data: equipment,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

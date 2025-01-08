@@ -2,12 +2,46 @@ const BloodInventory = require("../models/BloodInventory");
 const BloodRequest = require("../models/BloodRequest");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const BloodBank = require("../models/BloodBank");
+// create blood bank
+
+exports.createBloodBank = catchAsync(async (req, res) => {
+  const {
+    name,
+    licenseNumber,
+    contactInfo,
+    address,
+    inventory,
+    services,
+    operatingHours,
+    is24x7,
+  } = req.body;
+
+  const bloodBank = await BloodBank.create({
+    userId: req.user._id,
+    name,
+    licenseNumber,
+    contactInfo,
+    address,
+    inventory,
+    services,
+    operatingHours,
+    is24x7,
+  });
+
+  res.status(201).json({
+    status: "success",
+    data: {
+      bloodBank,
+    },
+  });
+});
 
 // Inventory Management
 exports.updateInventory = catchAsync(async (req, res) => {
   const inventory = await BloodInventory.create({
     ...req.body,
-    bloodBank: req.user._id,
+    bloodBankId: req.user._id,
   });
 
   res.status(201).json({
@@ -21,7 +55,7 @@ exports.getAvailability = catchAsync(async (req, res) => {
     // Match documents based on the current blood bank, availability, and expiry date
     {
       $match: {
-        bloodBank: req.user._id, // Filters by the user's associated blood bank
+        bloodBankId: req.user._id, // Filters by the user's associated blood bank
         status: "available", // Ensures only "available" items are included
         expiryDate: { $gt: new Date() }, // Includes only items not yet expired
       },
@@ -62,13 +96,19 @@ exports.getAvailability = catchAsync(async (req, res) => {
   });
 });
 
+
+// exports.getBills = catchAsync(async (req, res, next) => {
+//   const getallbills = await BloodRequest.find({ bloodBankId: req.user._id });
+//   res.status(200).json({
+//     status: "success",
+//     data: { getallbills },
+//   });
+// });
+
+
 // Billing
 exports.generateBill = catchAsync(async (req, res, next) => {
   const request = await BloodRequest.findById(req.params.requestId);
-
-  if (!request || request.bloodBank.toString() !== req.user._id.toString()) {
-    return next(new AppError("Blood request not found", 404));
-  }
 
   if (request.status !== "approved") {
     return next(
@@ -118,7 +158,7 @@ exports.createBloodRequest = catchAsync(async (req, res, next) => {
 
   // Create a new blood request
   const bloodRequest = await BloodRequest.create({
-    bloodBank: req.user._id, // Assuming blood bank is identified by the logged-in user
+    bloodBankId: req.user._id, // Assuming blood bank is identified by the logged-in user
     requestedBy: req.body.requestedBy, // ID of the requesting hospital
     patient: req.body.patient, // Patient details
     component: req.body.component, // Blood component
@@ -137,7 +177,7 @@ exports.createBloodRequest = catchAsync(async (req, res, next) => {
 });
 
 exports.getBloodRequests = catchAsync(async (req, res) => {
-  const requests = await BloodRequest.find({ bloodBank: req.user._id })
+  const requests = await BloodRequest.find({ bloodBankId: req.user._id })
     .populate("requestedBy", "name")
     .populate("approvedBy", "name")
     .sort("-createdAt");
@@ -153,7 +193,7 @@ exports.updateRequestStatus = catchAsync(async (req, res, next) => {
   const request = await BloodRequest.findOneAndUpdate(
     {
       _id: req.params.requestId,
-      bloodBank: req.user._id,
+      bloodBankId: req.user._id,
     },
     {
       status: req.body.status,
@@ -164,6 +204,7 @@ exports.updateRequestStatus = catchAsync(async (req, res, next) => {
       runValidators: true,
     }
   );
+  console.log(request);
 
   if (!request) {
     return next(new AppError("Blood request not found", 404));
@@ -173,7 +214,7 @@ exports.updateRequestStatus = catchAsync(async (req, res, next) => {
   if (req.body.status === "approved") {
     const inventory = await BloodInventory.findOneAndUpdate(
       {
-        bloodBank: req.user._id,
+        bloodBankId: req.user._id,
         bloodType: request.patient.bloodType,
         component: request.component,
         status: "available",
@@ -183,6 +224,7 @@ exports.updateRequestStatus = catchAsync(async (req, res, next) => {
         $inc: { quantity: -request.quantity },
       }
     );
+    console.log(inventory);
 
     if (!inventory) {
       return next(new AppError("Insufficient inventory", 400));

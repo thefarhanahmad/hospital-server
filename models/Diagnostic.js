@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const diagnosticSchema = new mongoose.Schema({
+  diagnosticId:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref:"User"
+  },
   name: {
     type: String,
     required: [true, 'Diagnostic center name is required'],

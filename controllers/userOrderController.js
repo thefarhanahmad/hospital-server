@@ -6,13 +6,6 @@ const mongoose = require("mongoose");
 
 exports.orderMedicine = catchAsync(async (req, res, next) => {
   const { items, pharmacy, prescription, deliveryAddress } = req.body;
-  console.log("Pharmacy ID:", pharmacy);
-  console.log("Prescription ID:", prescription);
-  console.log(
-    "Medicine IDs:",
-    items.map((item) => item.medicine)
-  );
-
   // Convert string IDs to ObjectId using new mongoose.Types.ObjectId()
   const pharmacyId = new mongoose.Types.ObjectId(pharmacy); // Use 'new' here
   const prescriptionId = prescription
@@ -92,7 +85,7 @@ exports.bookTest = catchAsync(async (req, res) => {
 exports.getTestResults = catchAsync(async (req, res) => {
   const bookings = await DiagnosticBooking.find({
     user: req.user._id,
-    "report.url": { $exists: true },
+    
   })
     .populate("center", "name")
     .sort("-createdAt");

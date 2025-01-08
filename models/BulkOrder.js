@@ -6,7 +6,7 @@ const bulkOrderSchema = new mongoose.Schema(
     orderedBy: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: "ordererType",
+      ref: "User",
     },
     ordererType: {
       type: String,
@@ -50,7 +50,7 @@ const bulkOrderSchema = new mongoose.Schema(
     supplierType: {
       type: String,
       required: true,
-      enum: ["Pharmacy", "Supplier"],
+      enum: ["Pharmacy","Pathology", "Supplier"],
     },
     status: {
       type: String,

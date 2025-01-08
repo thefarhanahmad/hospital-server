@@ -4,8 +4,7 @@ exports.testValidation = [
   body("name").trim().notEmpty().withMessage("Test name is required"),
 
   body("category")
-    .isIn(["hematology", "biochemistry", "microbiology", "immunology", "other"])
-    .withMessage("Invalid test category"),
+  .trim().notEmpty().withMessage("Invalid test category"),
 
   body("price")
     .isFloat({ min: 0 })

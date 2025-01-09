@@ -162,6 +162,16 @@ exports.getBedStatus = catchAsync(async (req, res) => {
     data: { bedStatus },
   });
 });
+exports.getHospital = catchAsync(async (req, res) => {
+  const hospitals = await Hospital.find({
+    email: req.user.email,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: { hospitals },
+  });
+});
 
 exports.updateBedStatus = catchAsync(async (req, res, next) => {
   const { ward, totalBeds, occupiedBeds } = req.body;
@@ -213,16 +223,17 @@ exports.admitPatient = catchAsync(async (req, res, next) => {
   });
 });
 
-// exports.getAdmitPatients = catchAsync(async (req, res, next) => {
-//   const admission = await PatientAdmission.find({
-//     hospital: req.user._id,
-//   });
+exports.getAdmitPatients = catchAsync(async (req, res, next) => {
+  const admission = await PatientAdmission.find({
+    hospital: req.user._id,
+  }).populate("patient");
 
-//   res.status(201).json({
-//     status: "success",
-//     data: { admission },
-//   });
-// });
+  res.status(201).json({
+    status: "success",
+    dataLength: admission.length,
+    data: { admission },
+  });
+});
 
 exports.dischargePatient = catchAsync(async (req, res, next) => {
   const admission = await PatientAdmission.findById(req.params.id);

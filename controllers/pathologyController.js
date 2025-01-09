@@ -5,6 +5,7 @@ const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const Equipment = require("../models/Equipment");
 const PathologyLab = require("../models/PathologyLab");
+const User = require("../models/User");
 
 exports.createPathologyLab = catchAsync(async (req, res) => {
   try {
@@ -54,6 +55,7 @@ exports.addTest = catchAsync(async (req, res) => {
     data: { test },
   });
 });
+
 exports.getTests = catchAsync(async (req, res) => {
   const tests = await PathologyTest.find({
     lab: req.user._id,
@@ -66,6 +68,9 @@ exports.getTests = catchAsync(async (req, res) => {
     data: { tests },
   });
 });
+
+
+
 exports.generateReport = catchAsync(async (req, res, next) => {
   const { test, patient, results } = req.body;
 

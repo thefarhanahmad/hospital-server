@@ -13,6 +13,10 @@ const hospitalSchema = new mongoose.Schema(
       enum: ["public", "private"],
       default: "public",
     },
+
+    email: {
+      type: String,
+    },
     hospitalId: {
       type: mongoose.Schema.ObjectId,
       ref: "User",

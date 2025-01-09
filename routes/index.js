@@ -15,6 +15,7 @@ const subscriptionRoutes = require("./subscriptionRoutes");
 const notificationRoutes = require("./notificationRoutes");
 const searchRoutes = require("./searchRoutes");
 const blogRoutes = require("./blogRoutes");
+const publicRoutes = require("./publicRoutes");
 const router = express.Router();
 
 router.use("/search", searchRoutes);
@@ -34,5 +35,6 @@ router.use("/packages", packageRoutes);
 router.use("/subscriptions", subscriptionRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/blog", blogRoutes);
+router.use("/get", publicRoutes);
 
 module.exports = router;

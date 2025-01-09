@@ -150,6 +150,18 @@ exports.getInventory = catchAsync(async (req, res) => {
   });
 });
 
+exports.getallPharmacyInventories = catchAsync(async (req, res) => {
+  const inventories = await PharmacyInventory.find({
+    pharmacyId: req.user._id,
+  });
+
+  res.status(200).json({
+    status: "success",
+    results: inventories.length,
+    data: { inventories },
+  });
+});
+
 exports.updateInventory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { quantity, purchasePrice, sellingPrice, reorderLevel } = req.body;

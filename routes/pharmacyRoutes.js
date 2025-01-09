@@ -17,7 +17,6 @@ router.get("/all-pharmacy", pharmacyController.getAllPharmacy);
 router.post("/create-medicine", pharmacyController.createMedicine);
 router.get("/all-medicine", pharmacyController.getMedicine);
 
-
 router.post(
   "/inventory",
   // validateRequest(inventoryUpdateRules),
@@ -25,6 +24,7 @@ router.post(
 );
 router.patch("/inventory/:id", pharmacyController.updateInventory);
 router.get("/inventory", pharmacyController.getInventory);
+router.get("/all-inventories", pharmacyController.getallPharmacyInventories);
 
 router.post(
   "/billing",

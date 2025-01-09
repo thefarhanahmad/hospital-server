@@ -13,7 +13,6 @@ const router = express.Router();
 
 const uploadFields = [{ name: "hospitalImages", maxCount: 10 }];
 
-
 // Protected routes
 router.use(protect);
 router.use(restrictTo("hospital"));
@@ -24,6 +23,7 @@ router.post(
 );
 router.post("/bed-status", hospitalController.createBed);
 router.get("/bed-status", hospitalController.getBedStatus);
+router.get("/hospitals", hospitalController.getHospital);
 router.put(
   "/bed-status",
   validateRequest(bedStatusRules),
@@ -35,7 +35,7 @@ router.post(
   // validateRequest(admissionRules),
   hospitalController.admitPatient
 );
-// router.get("/admission", hospitalController.getAdmitPatients);
+router.get("/admission", hospitalController.getAdmitPatients);
 
 router.put(
   "/discharge/:id",

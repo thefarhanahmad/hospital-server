@@ -5,8 +5,12 @@ const Medicine = require("../models/Medicine");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const medicineCategory = require("../models/medicineCategory");
+const Razorpay = require("razorpay");
 
-// Create a Pharmacy
+const razorpay = new Razorpay({
+  key_id: "8e9ac4b1fba2d003",
+  key_secret: "e1a5234d6bf9c45e8d2b613a7589efb2",
+});
 exports.createPharmacy = async (req, res) => {
   try {
     // Merge all fields from req and include pharmacyId from req.user
@@ -24,7 +28,6 @@ exports.createPharmacy = async (req, res) => {
     });
   }
 };
-
 exports.createMedicine = async (req, res) => {
   try {
     const {
@@ -82,7 +85,6 @@ exports.createMedicine = async (req, res) => {
     });
   }
 };
-// get medicine
 exports.getMedicine = catchAsync(async (req, res) => {
   const medicine = await Medicine.find({ pharmacyId: req.user._id });
   res.status(200).json({
@@ -90,7 +92,6 @@ exports.getMedicine = catchAsync(async (req, res) => {
     data: { medicine: medicine },
   });
 });
-
 exports.createInventory = async (req, res) => {
   try {
     const {
@@ -130,7 +131,6 @@ exports.createInventory = async (req, res) => {
     });
   }
 };
-
 exports.getInventory = catchAsync(async (req, res) => {
   const { branchId } = req.query;
   const inventory = await PharmacyInventory.find({ branch: branchId })
@@ -149,7 +149,6 @@ exports.getInventory = catchAsync(async (req, res) => {
     data: { inventory: inventoryWithStatus },
   });
 });
-
 exports.getallPharmacyInventories = catchAsync(async (req, res) => {
   const inventories = await PharmacyInventory.find({
     pharmacyId: req.user._id,
@@ -161,7 +160,6 @@ exports.getallPharmacyInventories = catchAsync(async (req, res) => {
     data: { inventories },
   });
 });
-
 exports.updateInventory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { quantity, purchasePrice, sellingPrice, reorderLevel } = req.body;
@@ -191,11 +189,9 @@ exports.updateInventory = catchAsync(async (req, res, next) => {
     data: { inventory },
   });
 });
-
 exports.createBill = catchAsync(async (req, res, next) => {
   const { items, patient, prescription, paymentMethod } = req.body;
 
-  // Validate inventory and calculate totals
   let subtotal = 0;
   const validatedItems = [];
 
@@ -227,19 +223,28 @@ exports.createBill = catchAsync(async (req, res, next) => {
       price: inventory.sellingPrice,
       discount: item.discount || 0,
     });
-
     // Update inventory
     inventory.quantity -= item.quantity;
     await inventory.save();
   }
 
-  // Calculate tax and total
-  const tax = subtotal * 0.18; // 18% GST
+  const tax = subtotal * 0.18;
   const totalDiscount = validatedItems.reduce(
     (acc, item) => acc + item.discount,
     0
   );
   const total = subtotal + tax - totalDiscount;
+
+  // Create a Razorpay order
+  const razorpayOrder = await razorpay.orders.create({
+    amount: total * 100, // Amount in paise
+    currency: "INR",
+    receipt: `receipt_${Date.now()}`,
+  });
+
+  if (!razorpayOrder) {
+    return next(new AppError("Failed to create Razorpay order", 500));
+  }
 
   const bill = await PharmacyBill.create({
     pharmacy: req.user._id,
@@ -251,15 +256,45 @@ exports.createBill = catchAsync(async (req, res, next) => {
     totalDiscount,
     total,
     paymentMethod,
-    status: "completed",
+    razorpayOrderId: razorpayOrder.id,
+    status: "pending", // Initially pending until payment is verified
   });
 
   res.status(201).json({
     status: "success",
+    data: { bill, razorpayOrder },
+  });
+});
+exports.verifyPayment = catchAsync(async (req, res, next) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
+    req.body;
+
+  const crypto = require("crypto");
+  const generatedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  if (generatedSignature !== razorpay_signature) {
+    return next(new AppError("Payment verification failed", 400));
+  }
+
+  const bill = await PharmacyBill.findOneAndUpdate(
+    { razorpayOrderId: razorpay_order_id },
+    { status: "completed", razorpayPaymentId: razorpay_payment_id },
+    { new: true }
+  );
+
+  if (!bill) {
+    return next(new AppError("Bill not found for the provided order ID", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "Payment verified successfully",
     data: { bill },
   });
 });
-
 exports.getBills = catchAsync(async (req, res) => {
   const bills = await PharmacyBill.find({ pharmacy: req.user._id })
     .populate("patient", "name email")
@@ -276,7 +311,6 @@ exports.getBills = catchAsync(async (req, res) => {
     data: { bills },
   });
 });
-
 exports.getAllPharmacy = catchAsync(async (req, res) => {
   const pharmacy = await Pharmacy.find({ pharmacyId: req.user._id });
   res.status(200).json({

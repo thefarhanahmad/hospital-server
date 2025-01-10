@@ -15,14 +15,14 @@ exports.orderMedicine = catchAsync(async (req, res, next) => {
   // Map the medicine items to ObjectId using 'new'
   const itemsWithObjectId = items.map((item) => ({
     ...item,
-    medicine: new mongoose.Types.ObjectId(item.medicine), // Correct usage with 'new'
+    medicine: new mongoose.Types.ObjectId(item.medicine),
   }));
 
-  // Calculate totals
   const subtotal = itemsWithObjectId.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+  
   const tax = subtotal * 0.18; // 18% GST
   const deliveryCharges = 50; // Fixed delivery charge
   const total = subtotal + tax + deliveryCharges;

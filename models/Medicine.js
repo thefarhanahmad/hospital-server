@@ -11,11 +11,6 @@ const medicineSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "Pharmacy",
     },
-    mainCategory: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "MedicineCategory",
-    },
-
     genericName: {
       type: String,
       required: [true, "Generic name is required"],

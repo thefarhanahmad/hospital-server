@@ -14,8 +14,18 @@ const pathologyTestSchema = new mongoose.Schema(
       trim: true,
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "LabCategory",
+      type: string,
+      enum: [
+        "Blood Tests",
+        "Urine Tests",
+        "Hormonal Tests",
+        "Infection Tests",
+        "Cancer Diagnosis",
+        " Allergy Tests",
+        "Genetic Tests",
+        "Microbiological Tests",
+        "Coagulation Tests",
+      ],
       required: true,
     },
     description: {

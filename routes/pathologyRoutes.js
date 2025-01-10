@@ -28,7 +28,8 @@ router.post(
   pathologyController.generateReport
 );
 router.get("/reports", pathologyController.getReports);
-
+router.post("/lab-category", pathologyController.addlabCategory);
+router.get("/all-lab-category", pathologyController.getlabCategory);
 // Inventory Management
 router.post("/inventory", pathologyController.createInventory);
 router.get("/inventory", pathologyController.getInventory);

@@ -6,7 +6,7 @@ const AppError = require("../utils/appError");
 const Equipment = require("../models/Equipment");
 const PathologyLab = require("../models/PathologyLab");
 const User = require("../models/User");
-
+const LabCategory = require("../models/labCategory");
 exports.createPathologyLab = catchAsync(async (req, res) => {
   try {
     const {
@@ -211,3 +211,39 @@ exports.getAllEquipment = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+exports.addlabCategory = catchAsync(async (req, res) => {
+  try {
+    const { name } = req.body;
+    const existingCategory = await LabCategory.findOne({ name });
+    if (existingCategory) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Category already exists" });
+    }
+    const category = new LabCategory({ name });
+    await category.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Lab Category added successfully",
+      category,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error adding category",
+      error: error.message,
+    });
+  }
+});
+
+exports.getlabCategory = catchAsync(async (req, res) => {
+  const labCategory = await LabCategory.find();
+  res.status(200).json({
+    status: "success",
+    message: "All medicine categories retrieved successfully.",
+    data: labCategory,
+  });
+});

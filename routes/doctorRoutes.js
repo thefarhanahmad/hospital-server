@@ -29,7 +29,6 @@ const uploadFields = [
 // Protected routes
 router.use(protect);
 router.use(restrictTo("doctor"));
-
 router.post(
   "/register",
   upload.fields(uploadFields),
@@ -43,7 +42,8 @@ router.post(
 );
 
 router.get("/appointments", doctorController.getAppointments);
-
+router.post("/doctor-category", doctorController.addCategory);
+router.get("/all-doctor-category", doctorController.getAllDoctorCategory);
 router.post(
   "/prescription",
   validateRequest(prescriptionRules),

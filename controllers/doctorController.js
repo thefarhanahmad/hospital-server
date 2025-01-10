@@ -95,7 +95,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
 
     // Create a new doctor object
     const doctorData = {
-      userId: req.user?._id || null, // Use authenticated user's ID, if available
+      userId: req.user?._id || null, 
       name,
       category,
       registrationNumber,
@@ -237,5 +237,40 @@ exports.getPrescriptions = catchAsync(async (req, res) => {
     status: "success",
     results: prescriptions.length,
     data: { prescriptions },
+  });
+});
+
+exports.addCategory = catchAsync(async (req, res) => {
+  try {
+    const { name } = req.body;
+    const existingCategory = await doctorCategory.findOne({ name });
+    if (existingCategory) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Category already exists" });
+    }
+    const category = new doctorCategory({ name });
+    await category.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Category added successfully",
+      category,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error adding category",
+      error: error.message,
+    });
+  }
+});
+
+exports.getAllDoctorCategory = catchAsync(async (req, res) => {
+  const doctorCategories = await doctorCategory.find();
+  res.status(200).json({
+    status: "success",
+    message: "All doctor categories retrieved successfully.",
+    data: doctorCategories,
   });
 });

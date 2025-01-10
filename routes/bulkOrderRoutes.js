@@ -26,7 +26,6 @@ router.post(
   bulkOrderController.createBulkReagentOrder
 );
 
-// Diagnostic center supply orders
 router.post(
   "/supplies",
   restrictTo("diagnostic"),

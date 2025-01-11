@@ -6,7 +6,7 @@ const AppError = require("../utils/appError");
 const Equipment = require("../models/Equipment");
 const PathologyLab = require("../models/PathologyLab");
 const User = require("../models/User");
-const LabCategory = require("../models/labCategory");
+
 exports.createPathologyLab = catchAsync(async (req, res) => {
   try {
     const {

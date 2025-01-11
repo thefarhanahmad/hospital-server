@@ -3,7 +3,14 @@ const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const Contact = require("../models/contact");
 const cart = require("../models/Cart");
+const PharmacyBill = require("../models/PharmacyBill");
+const Razorpay = require("razorpay");
+const PharmacyInventory = require("../models/PharmacyInventory");
 
+const razorpay = new Razorpay({
+  key_id: "rzp_test_S94PkPDE4dpiOy",
+  key_secret: "FkPWzsLPpEW4ux0WGzf4ki6Q",
+});
 exports.getAllUsers = catchAsync(async (req, res) => {
   const users = await User.find().select("-__v");
 
@@ -215,3 +222,117 @@ exports.getAllCart = async (req, res) => {
   }
 };
 
+//proced to checkout user hit
+exports.createBill = catchAsync(async (req, res, next) => {
+  const { items, prescription, paymentMethod, pharmacyID } = req.body;
+  console.log("hit");
+  let subtotal = 5000;
+  const validatedItems = [];
+
+  for (const item of items) {
+    const inventory = await PharmacyInventory.findOne({
+      _id: item.inventory,
+      pharmacyId: pharmacyID,
+    });
+
+    if (!inventory) {
+      return next(new AppError("Invalid inventory item", 400));
+    }
+
+    if (inventory.quantity < item.quantity) {
+      return next(
+        new AppError(
+          `Insufficient stock for item: ${inventory.medicine.name}`,
+          400
+        )
+      );
+    }
+
+    const itemTotal = item.quantity * inventory.sellingPrice;
+    subtotal += itemTotal;
+
+    validatedItems.push({
+      inventory: inventory._id,
+      quantity: item.quantity,
+      price: inventory.sellingPrice,
+      discount: item.discount || 0,
+    });
+    // Update inventory
+    inventory.quantity -= item.quantity;
+    await inventory.save();
+  }
+
+  const tax = subtotal * 0.18;
+  const totalDiscount = validatedItems.reduce(
+    (acc, item) => acc + item.discount,
+    0
+  );
+  const total = subtotal + tax - totalDiscount;
+
+  // Create a Razorpay order
+  const razorpayOrder = await razorpay.orders.create({
+    amount: total * 100, // Amount in paise
+    currency: "INR",
+    receipt: `receipt_${Date.now()}`,
+  });
+
+ 
+
+  if (!razorpayOrder) {
+    return next(new AppError("Failed to create Razorpay order", 500));
+  }
+
+  const bill = await PharmacyBill.create({
+    pharmacy: pharmacyID,
+    patient: req.user._id,
+    prescription,
+    items: validatedItems,
+    subtotal,
+    tax,
+    totalDiscount,
+    total,
+    paymentMethod,
+    razorpayOrderId: razorpayOrder.id,
+    status: "pending", // Initially pending until payment is verified
+  });
+
+
+
+  res.status(201).json({
+    status: "success",
+    data: { bill, razorpayOrder },
+  });
+});
+
+exports.verifyPayment = catchAsync(async (req, res, next) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
+    req.body;
+
+  const crypto = require("crypto");
+  const generatedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  if (generatedSignature !== razorpay_signature) {
+    return next(new AppError("Payment verification failed", 400));
+  }
+
+  const bill = await PharmacyBill.findOneAndUpdate(
+    { razorpayOrderId: razorpay_order_id },
+    { status: "completed", razorpayPaymentId: razorpay_payment_id },
+    { new: true }
+  );
+
+
+
+  if (!bill) {
+    return next(new AppError("Bill not found for the provided order ID", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "Payment verified successfully",
+    data: { bill },
+  });
+});

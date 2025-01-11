@@ -14,7 +14,7 @@ const pathologyTestSchema = new mongoose.Schema(
       trim: true,
     },
     category: {
-      type: string,
+      type: String,
       enum: [
         "Blood Tests",
         "Urine Tests",

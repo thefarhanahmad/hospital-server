@@ -26,11 +26,11 @@ router.patch("/inventory/:id", pharmacyController.updateInventory);
 router.get("/inventory", pharmacyController.getInventory);
 router.get("/all-inventories", pharmacyController.getallPharmacyInventories);
 
-router.post(
-  "/billing",
-  validateRequest(billCreationRules),
-  pharmacyController.createBill
-);
+// router.post(
+//   "/billing",
+//   validateRequest(billCreationRules),
+//   pharmacyController.createBill
+// );
 router.get("/bills", pharmacyController.getBills);
 
 module.exports = router;

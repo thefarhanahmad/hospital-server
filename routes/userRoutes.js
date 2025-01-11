@@ -29,6 +29,15 @@ router.post(
   validateRequest(telemedicineRules),
   userAppointmentController.startTelemedicine
 );
+router.post(
+  "/payment",
+  // validateRequest(billCreationRules),
+  userController.createBill
+);
+router.post(
+  "/verify-payment",
+  userController.verifyPayment
+);
 // Medicine order routes
 router.post(
   "/order-medicine",

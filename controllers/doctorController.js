@@ -5,11 +5,10 @@ const Prescription = require("../models/Prescription");
 const { catchAsync } = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const cloudinary = require("../config/cloudinary");
-const Category = require("../models/doctorCategory");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const fs = require("fs");
-const doctorCategory = require("../models/doctorCategory");
+
 
 exports.registerDoctor = catchAsync(async (req, res) => {
   console.log("doctor req body:", req.body);

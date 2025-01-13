@@ -51,7 +51,7 @@ router.post(
 );
 
 router.get("/prescriptions", doctorController.getPrescriptions);
-
+router.post("/create-appointments",doctorController.createBulkAppointments)
 // Admin only routes
 router.patch(
   "/:id/verification",

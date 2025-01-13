@@ -7,29 +7,41 @@ const AppError = require("../utils/appError");
 const cloudinary = require("../config/cloudinary");
 const mongoose = require("mongoose");
 const User = require("../models/User");
+const DoctorAppointment = require("../models/drAppointment");
 const fs = require("fs");
 
-
 exports.registerDoctor = catchAsync(async (req, res) => {
-  console.log("doctor req body:", req.body);
-  console.log("doctor req files:", req.files);
-
-  const {
-    name,
-    registrationNumber,
-    clinicName,
-    degree,
-    aadharCardNumber,
-    mobileNumber,
-    clinicLocation,
-    latitude,
-    longitude,
-    email,
-    category,
-    status,
-  } = req.body;
-
   try {
+    // Log incoming request body and files for debugging
+    console.log("Doctor req body:", req.body);
+    console.log("Doctor req files:", req.files);
+
+    // Destructure fields from req.body
+    const {
+      name,
+      registrationNumber,
+      clinicName,
+      degree,
+      aadharCardNumber,
+      mobileNumber,
+      clinicLocation,
+      latitude,
+      longitude,
+      email,
+      category,
+      status,
+      fees
+    } = req.body;
+
+    // Check if required fields are missing
+    if (!name || !email || !registrationNumber || !mobileNumber) {
+      return res.status(400).json({
+        status: "error",
+        message:
+          "Name, email, registration number, and mobile number are required.",
+      });
+    }
+
     // Check if the doctor already exists
     const existingDoctor = await Doctor.findOne({ "contactInfo.email": email });
     if (existingDoctor) {
@@ -85,7 +97,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
           },
         ].filter((marksheet) => marksheet.filePath), // Remove empty entries
       },
-      photograph: req.files.photograph?.[0].path || null,
+      photograph: photograph?.[0]?.path || null,
       mciRegistration: mciRegistration?.map((file) => file.path) || [],
     };
 
@@ -94,12 +106,13 @@ exports.registerDoctor = catchAsync(async (req, res) => {
 
     // Create a new doctor object
     const doctorData = {
-      userId: req.user?._id || null, 
+      userId: req.user?._id ,
       name,
       category,
       registrationNumber,
       clinicName,
       degree,
+      fees,
       aadharCardNumber,
       contactInfo: {
         phone: mobileNumber,
@@ -123,6 +136,7 @@ exports.registerDoctor = catchAsync(async (req, res) => {
     // Save doctor to the database
     const doctor = await Doctor.create(doctorData);
 
+    // Send success response
     res.status(201).json({
       status: "success",
       message: "Doctor registered successfully!",
@@ -160,6 +174,131 @@ exports.verifyDoctor = catchAsync(async (req, res, next) => {
     data: { verification },
   });
 });
+
+//doctor creates its appointments
+exports.createBulkAppointments = catchAsync(async (req, res) => {
+  try {
+    const { date, hourlyAvailability } = req.body;
+
+    // Validate input
+    if (
+      !date ||
+      !hourlyAvailability ||
+      !Array.isArray(hourlyAvailability) ||
+      hourlyAvailability.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Invalid input. Please provide a valid date and hourly availability.",
+        });
+    }
+
+    const doctorId = req.user._id;
+
+    // Check for existing appointments for the same doctor and date
+    const existingAppointment = await DoctorAppointment.findOne({
+      doctorId,
+      date: new Date(date),
+    });
+
+    if (existingAppointment) {
+      const existingSlots = existingAppointment.hourlyAvailability;
+
+      // Check if any of the provided slots already exist or are booked
+      const duplicateSlots = hourlyAvailability.filter((newSlot) =>
+        existingSlots.some(
+          (existingSlot) =>
+            existingSlot.hours === newSlot.hours && existingSlot.isBooked
+        )
+      );
+
+      if (duplicateSlots.length > 0) {
+        return res.status(400).json({
+          message: "Some appointment slots are already booked.",
+          duplicateSlots,
+        });
+      }
+
+      // Explicitly ensure 'isActive' is updated for all slots
+      const updatedSlots = existingSlots.map((existingSlot) => {
+        const newSlot = hourlyAvailability.find(
+          (newSlot) => newSlot.hours === existingSlot.hours
+        );
+
+        if (newSlot) {
+          // Update 'isActive' if it's different
+          existingSlot.isActive = newSlot.isActive !== undefined ? newSlot.isActive : existingSlot.isActive;
+        }
+
+        return existingSlot;
+      });
+
+      // Merge new slots (without duplicates)
+      const newSlots = hourlyAvailability.filter(
+        (newSlot) =>
+          !existingSlots.some(
+            (existingSlot) => existingSlot.hours === newSlot.hours
+          )
+      );
+
+      // Add the new slots to the updated slots
+      existingAppointment.hourlyAvailability = [
+        ...updatedSlots,
+        ...newSlots,
+      ];
+
+      // Save the updated appointment
+      const updatedAppointment = await existingAppointment.save();
+
+      return res.status(200).json({
+        message: "Appointment slots updated successfully.",
+        results: updatedAppointment,
+      });
+    }
+
+    // If no existing appointments, create a new one
+    const newAppointment = new DoctorAppointment({
+      doctorId,
+      date: new Date(date),
+      hourlyAvailability: hourlyAvailability.map((slot) => ({
+        ...slot,
+        isActive: slot.isActive !== undefined ? slot.isActive : false, // Ensure isActive is set
+      })),
+    });
+
+    await newAppointment.save();
+
+    return res.status(201).json({
+      message: "Appointments created successfully.",
+      results: newAppointment,
+    });
+  } catch (error) {
+    console.error("Error in createBulkAppointments:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+exports.getAllAppoinments=catchAsync(async(req,res)=>{
+try {
+  const {doctorId}=req.body
+   const response=await DoctorAppointment.find({doctorId:doctorId})
+
+   return res.status(202).send({
+    message:"Appoinment Fetched sucessfully",
+    data:response
+   })
+
+} catch (error) {
+  res.status(500).json({
+    success: false,
+    message: "Error Appoinment Fetched ",
+    error: error.message,
+  });
+}
+})
+
 
 exports.createConsultation = catchAsync(async (req, res) => {
   const consultation = await Consultation.create({

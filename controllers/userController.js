@@ -6,10 +6,15 @@ const cart = require("../models/Cart");
 const PharmacyBill = require("../models/PharmacyBill");
 const Razorpay = require("razorpay");
 const PharmacyInventory = require("../models/PharmacyInventory");
+const fixedAppoinments = require("../models/fixedAppoinments");
+const drAppoinmentModel = require("../models/drAppointment");
+const drmodel = require("../models/Doctor");
+const seckeyId = "rzp_test_S94PkPDE4dpiOy";
+const seckey = "FkPWzsLPpEW4ux0WGzf4ki6Q";
 
 const razorpay = new Razorpay({
-  key_id: "rzp_test_S94PkPDE4dpiOy",
-  key_secret: "FkPWzsLPpEW4ux0WGzf4ki6Q",
+  key_id: seckeyId,
+  key_secret: seckey,
 });
 exports.getAllUsers = catchAsync(async (req, res) => {
   const users = await User.find().select("-__v");
@@ -221,23 +226,24 @@ exports.getAllCart = async (req, res) => {
     console.log(error);
   }
 };
-
 //proced to checkout user hit
 exports.createBill = catchAsync(async (req, res, next) => {
-  const { items, prescription, paymentMethod, pharmacyID } = req.body;
-  console.log("hit");
+  const { items, prescription, paymentMethod } = req.body;
+
   let subtotal = 5000;
   const validatedItems = [];
+  let pharmacyId;
 
   for (const item of items) {
     const inventory = await PharmacyInventory.findOne({
-      _id: item.inventory,
-      pharmacyId: pharmacyID,
+      medicineId: item.medicineId,
     });
 
     if (!inventory) {
       return next(new AppError("Invalid inventory item", 400));
     }
+
+    pharmacyId = inventory.pharmacyId;
 
     if (inventory.quantity < item.quantity) {
       return next(
@@ -257,6 +263,7 @@ exports.createBill = catchAsync(async (req, res, next) => {
       price: inventory.sellingPrice,
       discount: item.discount || 0,
     });
+
     // Update inventory
     inventory.quantity -= item.quantity;
     await inventory.save();
@@ -276,14 +283,12 @@ exports.createBill = catchAsync(async (req, res, next) => {
     receipt: `receipt_${Date.now()}`,
   });
 
- 
-
   if (!razorpayOrder) {
     return next(new AppError("Failed to create Razorpay order", 500));
   }
 
   const bill = await PharmacyBill.create({
-    pharmacy: pharmacyID,
+    pharmacyId: pharmacyId,
     patient: req.user._id,
     prescription,
     items: validatedItems,
@@ -296,14 +301,11 @@ exports.createBill = catchAsync(async (req, res, next) => {
     status: "pending", // Initially pending until payment is verified
   });
 
-
-
   res.status(201).json({
     status: "success",
     data: { bill, razorpayOrder },
   });
 });
-
 exports.verifyPayment = catchAsync(async (req, res, next) => {
   const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
     req.body;
@@ -313,6 +315,7 @@ exports.verifyPayment = catchAsync(async (req, res, next) => {
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
     .digest("hex");
+  s;
 
   if (generatedSignature !== razorpay_signature) {
     return next(new AppError("Payment verification failed", 400));
@@ -324,8 +327,6 @@ exports.verifyPayment = catchAsync(async (req, res, next) => {
     { new: true }
   );
 
-
-
   if (!bill) {
     return next(new AppError("Bill not found for the provided order ID", 404));
   }
@@ -334,5 +335,148 @@ exports.verifyPayment = catchAsync(async (req, res, next) => {
     status: "success",
     message: "Payment verified successfully",
     data: { bill },
+  });
+});
+
+/* --------------------------------shedule Apointment with dr------------------------------- */
+exports.bookAppoinment = catchAsync(async (req, res) => {
+  try {
+    const { doctorID, date, time, slotId } = req.body;
+    const chekIsAlredyAppoinment = await fixedAppoinments.find({
+      patient: req.user._id,
+      date: date,
+      time: time,
+      doctorId: doctorID,
+    });
+
+    if (chekIsAlredyAppoinment.paid) {
+      return res.status(400).send({
+        success: false,
+        message: "Appoinment alredy sheduled ",
+        data: {
+          date: chekIsAlredyAppoinment.date,
+          amount: chekIsAlredyAppoinment.time,
+        },
+      });
+    }
+
+    const ChekISSlotAlredyBook = await drAppoinmentModel.findOne({
+      doctorId: doctorID,
+      date: date,
+    });
+
+    if (ChekISSlotAlredyBook) {
+      const { hourlyAvailability } = ChekISSlotAlredyBook;
+
+      const filterSlots = hourlyAvailability.filter((val) => val._id == slotId);
+
+      if (filterSlots.isBooked || !filterSlots.isActive) {
+        return res
+          .status(404)
+          .send({ message: "This Slot is Alredy booked plese Choose another" });
+      }
+
+      const getDrFees = await drmodel.findOne({ userId: doctorID });
+      const { fees } = getDrFees;
+      const razorpayOrder = await razorpay.orders.create({
+        amount: fees * 100, // Amount in paise
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+      });
+
+      await fixedAppoinments.create({
+        doctorId: doctorID,
+        patient: req.user._id,
+        orderId: razorpayOrder.id,
+        status: "created",
+        date: new Date(date),
+        time: time,
+        slot: slotId,
+        paid: false,
+        Amount: fees,
+      });
+
+      return res.status(201).send({
+        message: "order created sucessfully",
+        data: {
+          orderId: razorpayOrder.id,
+          currency: "INR",
+          amount: razorpayOrder.amount,
+          keyId: seckeyId,
+          KeySecret: seckey,
+        },
+      });
+    }
+  } catch (error) {}
+});
+
+exports.verifyAppoinmentPayment = catchAsync(async (req, res, next) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
+    req.body;
+
+  const crypto = require("crypto");
+
+  // Generate the HMAC signature
+  const generatedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  // Verify the generated signature with the received signature
+  if (generatedSignature !== razorpay_signature) {
+    return next(new AppError("Payment verification failed", 400));
+  }
+
+  // Update the appointment payment status
+  const confirmAppoinment = await fixedAppoinments.findOneAndUpdate(
+    {
+      patient: req.user._id,
+      orderId: razorpay_order_id,
+    },
+    { status: "success", paid: true },
+    { new: true }
+  );
+
+  if (!confirmAppoinment) {
+    return next(new AppError("Appointment not found or already updated", 404));
+  }
+
+  const { doctorId, patient, date, slot } = confirmAppoinment;
+
+  // Find the doctor's appointment schedule
+  const existingAppointment = await DoctorAppointment.findOne({
+    doctorId,
+    date: new Date(date),
+  });
+
+  if (!existingAppointment) {
+    return next(new AppError("Doctor's schedule not found", 404));
+  }
+
+  const existingSlots = existingAppointment.hourlyAvailability;
+
+  // Update the booked slot
+  const newUpdatedSlots = existingSlots.map((e) => {
+    if (e._id.toString() === slot.toString()) {
+      return {
+        ...e,
+        isBooked: true,
+        patientId: patient,
+      };
+    }
+    return e;
+  });
+
+  // Save the updated slots to the database
+  existingAppointment.hourlyAvailability = newUpdatedSlots;
+  const updatedAppointment = await existingAppointment.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Payment verified successfully",
+    data: {
+      appointment: confirmAppoinment,
+      updatedSchedule: updatedAppointment,
+    },
   });
 });

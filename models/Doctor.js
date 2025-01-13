@@ -43,6 +43,7 @@ const doctorSchema = new mongoose.Schema(
       ],
       required: true,
     },
+    fees:{type: Number, required: [true,'Consult fees is require']},
     registrationNumber: { type: String, required: true, unique: true },
     clinicName: { type: String, required: true, trim: true },
     verification: { type: Boolean, default: false },
@@ -68,8 +69,8 @@ const doctorSchema = new mongoose.Schema(
       },
       photograph: { type: String },
       mciRegistration: {
-        type: [String], // Array of file paths
-        default: [], // Default to an empty array
+        type: [String],
+        default: [],
       },
     },
     clinics: [
@@ -86,7 +87,7 @@ const doctorSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
-      default: "Pending",
+      default: "pending",
     },
   },
   { timestamps: true }

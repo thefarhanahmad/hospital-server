@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const pharmacyBillSchema = new mongoose.Schema({
-  pharmacy: {
+  pharmacyId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Pharmacy',
+    ref: 'User',
     required: true
   },
   patient: {

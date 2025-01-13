@@ -95,7 +95,6 @@ exports.getMedicine = catchAsync(async (req, res) => {
 exports.createInventory = async (req, res) => {
   try {
     const {
-      branch,
       medicineId,
       batchNumber,
       quantity,
@@ -106,7 +105,6 @@ exports.createInventory = async (req, res) => {
       location,
     } = req.body;
     const newInventory = new PharmacyInventory({
-      branch,
       medicineId,
       batchNumber,
       quantity,
@@ -132,8 +130,7 @@ exports.createInventory = async (req, res) => {
   }
 };
 exports.getInventory = catchAsync(async (req, res) => {
-  const { branchId } = req.query;
-  const inventory = await PharmacyInventory.find({ branch: branchId })
+  const inventory = await PharmacyInventory.find({ pharmacyId: req.user._id })
     .populate("medicineId")
     .sort("medicine.name");
 
@@ -163,8 +160,8 @@ exports.getallPharmacyInventories = catchAsync(async (req, res) => {
 exports.updateInventory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { quantity, purchasePrice, sellingPrice, reorderLevel } = req.body;
-  const inventory = await PharmacyInventory.findByIdAndUpdate(
-    id,
+  const inventory = await PharmacyInventory.findOneAndUpdate(
+    { _id: id, pharmacyId: req.user._id },
     {
       quantity,
       purchasePrice,
@@ -190,8 +187,8 @@ exports.updateInventory = catchAsync(async (req, res, next) => {
   });
 });
 exports.getBills = catchAsync(async (req, res) => {
-  const { pharmacyId } = req.body;
-  const bills = await PharmacyBill.find({ pharmacy: pharmacyId })
+  
+  const bills = await PharmacyBill.find({ pharmacyId: req.user._id })
     .populate("patient", "name email")
     .populate("prescription")
     .populate({

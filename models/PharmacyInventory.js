@@ -2,11 +2,7 @@ const mongoose = require("mongoose");
 
 const pharmacyInventorySchema = new mongoose.Schema(
   {
-    branch: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Pharmacy",
-      required: true,
-    },
+   
     pharmacyId:{
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
